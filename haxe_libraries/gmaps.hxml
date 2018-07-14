@@ -1,0 +1,4 @@
+# @install: lix --silent download "https://github.com/kevinresol/gmaps/archive/194a6902e3de3d3dffc721600696399807403610.tar.gz" into gmaps/0.0.0/github/194a6902e3de3d3dffc721600696399807403610
+-D gmaps=0.0.0
+# -cp ${HAXESHIM_LIBCACHE}/gmaps/0.0.0/github/194a6902e3de3d3dffc721600696399807403610/src
+-cp ../gmaps/src

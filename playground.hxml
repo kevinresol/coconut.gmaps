@@ -1,0 +1,6 @@
+-cp tests
+-main Playground
+-js bin/playground/index.js
+-dce full
+
+-lib coconut.gmaps
