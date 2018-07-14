@@ -20,6 +20,12 @@ abstract MarkerRef({ref:google.maps.Marker, binding:CallbackLink}) from {ref:goo
 		this = {ref: new google.maps.Marker(), binding: null}
 	}
 	
+	// this function makes sure there is at most only one listener for an event
+	public function listen(name:String, f) {
+		Event.clearListeners(this.ref, name);
+		if(f != null) Event.addListener(this.ref, name, f);
+	}
+	
 	public function reset() {
 		Event.clearInstanceListeners(this.ref);
 		this.ref.setMap(null);
@@ -47,7 +53,7 @@ class GoogleMap extends vdom.Foreign {
 				var i = 0;
 				for(m in v) {
 					// grab a marker ref
-					var marker = 
+					var ref = 
 						if(markers.length > i) {
 							var reused = markers[i];
 							reused.reset();
@@ -55,34 +61,28 @@ class GoogleMap extends vdom.Foreign {
 						} else 
 							markers[i] = new MarkerRef();
 					
-					var ref = marker.ref;
+					var marker = ref.ref;
 					var obs = m.observables;
 					
-					// this function makes sure there is at most only one listener for an event
-					function listen(name:String, f) {
-						Event.clearListeners(ref, name);
-						if(f != null) Event.addListener(ref, name, f);
-					}
-					
 					// refresh marker when data changes
-					marker.binding = [
-						obs.onClick.bind(listen.bind('click')),
-						obs.onDoubleClick.bind(listen.bind('dblclick')),
-						obs.onRightClick.bind(listen.bind('rightclick')),
-						obs.onMouseDown.bind(listen.bind('mousedown')),
-						obs.onMouseOut.bind(listen.bind('mouseout')),
-						obs.onMouseUp.bind(listen.bind('mouseup')),
-						obs.onMouseOver.bind(listen.bind('mouseover')),
-						obs.onDragStart.bind(listen.bind('dragstart')),
-						obs.onDrag.bind(listen.bind('drag')),
-						obs.onDragEnd.bind(listen.bind('dragend')),
-						obs.clickable.bind(ref.setClickable),
-						obs.draggable.bind(ref.setDraggable),
-						obs.position.bind(ref.setPosition),
+					ref.binding = [
+						obs.onClick.bind(ref.listen.bind('click')),
+						obs.onDoubleClick.bind(ref.listen.bind('dblclick')),
+						obs.onRightClick.bind(ref.listen.bind('rightclick')),
+						obs.onMouseDown.bind(ref.listen.bind('mousedown')),
+						obs.onMouseOut.bind(ref.listen.bind('mouseout')),
+						obs.onMouseUp.bind(ref.listen.bind('mouseup')),
+						obs.onMouseOver.bind(ref.listen.bind('mouseover')),
+						obs.onDragStart.bind(ref.listen.bind('dragstart')),
+						obs.onDrag.bind(ref.listen.bind('drag')),
+						obs.onDragEnd.bind(ref.listen.bind('dragend')),
+						obs.clickable.bind(marker.setClickable),
+						obs.draggable.bind(marker.setDraggable),
+						obs.position.bind(marker.setPosition),
 					];
 					
 					// enable the marker
-					ref.setMap(map);
+					marker.setMap(map);
 					
 					i++;
 				}
