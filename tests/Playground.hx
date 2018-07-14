@@ -2,6 +2,7 @@ import js.Browser.*;
 import coconut.Ui.*;
 import coconut.gmaps.*;
 import tink.pure.List;
+import tink.state.*;
 
 class Playground extends coconut.ui.View {
 	static function main() {
@@ -30,9 +31,14 @@ class Playground extends coconut.ui.View {
 			trace('update data');
 			var now = Date.now().toString();
 			
+			inline function rand(f:Float) return (Math.random() - 0.5) * f;
+			
 			function genMarker() {
+				var position = new State({lat: 22.4254815 + rand(0.01), lng: 114.212813 + rand(0.01)});
+				new haxe.Timer(16).run = function() position.set({lat: position.value.lat + rand(0.0001), lng: position.value.lng + rand(0.0001)});
+				
 				return new Marker({
-					position: {lat: 22.4254815 + Math.random() * 0.01 - 0.005, lng: 114.212813 + Math.random() * 0.01 - 0.005},
+					position: position.observe(),
 					onClick: function(_) trace('clicked'),
 					onRightClick: function(_) trace('rightclicked'),
 					onDoubleClick: function(_) trace('dblclicked'),

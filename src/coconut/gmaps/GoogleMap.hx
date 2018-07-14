@@ -1,6 +1,7 @@
 package coconut.gmaps;
 
 import coconut.data.*;
+import google.maps.Event;
 import google.maps.LatLng;
 
 using tink.CoreApi;
@@ -13,11 +14,26 @@ private typedef Data = {
 	@:optional var markers(default, never):Value<List<Marker>>;
 }
 
+@:forward
+abstract MarkerRef({ref:google.maps.Marker, binding:CallbackLink}) from {ref:google.maps.Marker, binding:CallbackLink} {
+	public inline function new() {
+		this = {ref: new google.maps.Marker(), binding: null}
+	}
+	
+	public function reset() {
+		Event.clearInstanceListeners(this.ref);
+		this.ref.setMap(null);
+		
+		this.binding.dissolve();
+		this.binding = null;
+	}
+}
+
 class GoogleMap extends vdom.Foreign {
 	
 	var data:Data;
 	var map:google.maps.Map;
-	var markers:Array<google.maps.Marker> = [];
+	var markers:Array<MarkerRef> = [];
 	var binding:CallbackLink = null;
 	
 	public function new(data:Data) {
@@ -33,37 +49,47 @@ class GoogleMap extends vdom.Foreign {
 					var marker = 
 						if(markers.length > i) {
 							var reused = markers[i];
-							google.maps.Event.clearInstanceListeners(reused);
+							reused.reset();
 							reused;
 						} else 
-							markers[i] = new google.maps.Marker();
+							markers[i] = new MarkerRef();
 					
-					if(m.onClick != null) marker.addListener('click', m.onClick);
-					if(m.onDoubleClick != null) marker.addListener('dblclick', m.onDoubleClick);
-					if(m.onRightClick != null) marker.addListener('rightclick', m.onRightClick);
-					if(m.onMouseDown != null) marker.addListener('mousedown', m.onMouseDown);
-					if(m.onMouseOut != null) marker.addListener('mouseout', m.onMouseOut);
-					if(m.onMouseUp != null) marker.addListener('mouseup', m.onMouseUp);
-					if(m.onMouseOver != null) marker.addListener('mouseover', m.onMouseOver);
-					if(m.onDragStart != null) marker.addListener('dragstart', m.onDragStart);
-					if(m.onDrag != null) marker.addListener('drag', m.onDrag);
-					if(m.onDragEnd != null) marker.addListener('dragend', m.onDragEnd);
+					var ref = marker.ref;
+					var obs = m.observables;
 					
-					marker.setClickable(m.clickable);
-					marker.setDraggable(m.draggable);
-					marker.setPosition(m.position);
-					marker.setMap(map);
+					function listen(name:String, f) {
+						Event.clearListeners(ref, name);
+						if(f != null) Event.addListener(ref, name, f);
+					}
+					
+					marker.binding = [
+						obs.onClick.bind(listen.bind('click')),
+						obs.onDoubleClick.bind(listen.bind('dblclick')),
+						obs.onRightClick.bind(listen.bind('rightclick')),
+						obs.onMouseDown.bind(listen.bind('mousedown')),
+						obs.onMouseOut.bind(listen.bind('mouseout')),
+						obs.onMouseUp.bind(listen.bind('mouseup')),
+						obs.onMouseOver.bind(listen.bind('mouseover')),
+						obs.onDragStart.bind(listen.bind('dragstart')),
+						obs.onDrag.bind(listen.bind('drag')),
+						obs.onDragEnd.bind(listen.bind('dragend')),
+						obs.clickable.bind(ref.setClickable),
+						obs.draggable.bind(ref.setDraggable),
+						obs.position.bind(ref.setPosition),
+					];
+						
+					ref.setMap(map);
 					
 					i++;
 				}
 				
-				for(j in i...markers.length)
-					markers[j].setMap(null);
+				for(j in i...markers.length) {
+					markers[j].reset();
+				}
 			});
 		} else {
 			for(marker in markers) {
-				google.maps.Event.clearInstanceListeners(marker);
-				marker.setMap(null);
+				marker.reset();
 			}
 		}
 	}
