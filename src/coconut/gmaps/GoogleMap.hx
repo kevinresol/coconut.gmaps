@@ -46,6 +46,7 @@ class GoogleMap extends vdom.Foreign {
 			binding = binding & data.markers.bind(null, function(v) {
 				var i = 0;
 				for(m in v) {
+					// grab a marker ref
 					var marker = 
 						if(markers.length > i) {
 							var reused = markers[i];
@@ -57,11 +58,13 @@ class GoogleMap extends vdom.Foreign {
 					var ref = marker.ref;
 					var obs = m.observables;
 					
+					// this function makes sure there is at most only one listener for an event
 					function listen(name:String, f) {
 						Event.clearListeners(ref, name);
 						if(f != null) Event.addListener(ref, name, f);
 					}
 					
+					// refresh marker when data changes
 					marker.binding = [
 						obs.onClick.bind(listen.bind('click')),
 						obs.onDoubleClick.bind(listen.bind('dblclick')),
@@ -77,20 +80,19 @@ class GoogleMap extends vdom.Foreign {
 						obs.draggable.bind(ref.setDraggable),
 						obs.position.bind(ref.setPosition),
 					];
-						
+					
+					// enable the marker
 					ref.setMap(map);
 					
 					i++;
 				}
 				
-				for(j in i...markers.length) {
-					markers[j].reset();
-				}
+				// clean up unused marker instances
+				for(j in i...markers.length) markers[j].reset();
 			});
 		} else {
-			for(marker in markers) {
-				marker.reset();
-			}
+			// clean up all marker instances
+			for(marker in markers) marker.reset();
 		}
 	}
 	
