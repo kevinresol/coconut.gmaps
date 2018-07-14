@@ -15,9 +15,9 @@ class Playground extends coconut.ui.View {
 		return @hxx '
 			<div style="height:100%;width:100%">
 				<if ${markers.length == 0}>
-					<GoogleMap defaultCenter=${{lat: 22.4254815, lng: 114.212813}} defaultZoom={15}/>
+					<GoogleMap style="height:100%;width:100%" defaultCenter=${{lat: 22.4254815, lng: 114.212813}} defaultZoom={15}/>
 				<else>
-					<GoogleMap defaultCenter=${{lat: 22.4254815, lng: 114.212813}} defaultZoom={15} markers=${markers}/>
+					<GoogleMap style="height:100%;width:100%" defaultCenter=${{lat: 22.4254815, lng: 114.212813}} defaultZoom={15} markers=${markers}/>
 				</if>
 			</div>
 		';

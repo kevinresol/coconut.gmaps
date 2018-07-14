@@ -6,6 +6,8 @@ import google.maps.LatLng;
 using tink.CoreApi;
 
 private typedef Data = {
+	@:optional var className(default, never):String;
+	@:optional var style(default, never):String;
 	var defaultCenter(default, never):LatLngLiteral;
 	var defaultZoom(default, never):Float;
 	@:optional var markers(default, never):Value<List<Marker>>;
@@ -57,8 +59,8 @@ class GoogleMap extends vdom.Foreign {
 	
 	override function init() {
 		element = js.Browser.document.createDivElement();
-		element.style.width = '100%';
-		element.style.height = '100%';
+		element.className = data.className;
+		element.style.cssText = data.style;
 		
 		map = new google.maps.Map(element, {
 			center: data.defaultCenter,
