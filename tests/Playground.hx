@@ -24,19 +24,25 @@ class Playground extends coconut.ui.View {
 	}
 	
 	override function afterInit(e) {
-		var timer = new haxe.Timer(2000);
-		var count = 0;
+		var timer = new haxe.Timer(500);
+		var count = 1;
 		timer.run = function() {
 			trace('update data');
 			var now = Date.now().toString();
 			
-			function genMarker() return new Marker({
-				position: {lat: 22.4254815 + Math.random() * 0.01 - 0.005, lng: 114.212813 + Math.random() * 0.01 - 0.005},
-				onClick: function() trace(now),
-			});
+			function genMarker() {
+				return new Marker({
+					position: {lat: 22.4254815 + Math.random() * 0.01 - 0.005, lng: 114.212813 + Math.random() * 0.01 - 0.005},
+					onClick: function(_) trace('clicked'),
+					onRightClick: function(_) trace('rightclicked'),
+					onDoubleClick: function(_) trace('dblclicked'),
+					draggable: true,
+					onDrag: function(e) trace(e.latLng.lat(), e.latLng.lng()),
+				});
+			}
 			
 			markers = [for(i in 0...count % 3) genMarker()];
-			if(++count == 10) timer.stop();
+			if(++count > 1) timer.stop();
 		}
 	}
 }

@@ -39,7 +39,18 @@ class GoogleMap extends vdom.Foreign {
 							markers[i] = new google.maps.Marker();
 					
 					if(m.onClick != null) marker.addListener('click', m.onClick);
+					if(m.onDoubleClick != null) marker.addListener('dblclick', m.onDoubleClick);
+					if(m.onRightClick != null) marker.addListener('rightclick', m.onRightClick);
+					if(m.onMouseDown != null) marker.addListener('mousedown', m.onMouseDown);
+					if(m.onMouseOut != null) marker.addListener('mouseout', m.onMouseOut);
+					if(m.onMouseUp != null) marker.addListener('mouseup', m.onMouseUp);
+					if(m.onMouseOver != null) marker.addListener('mouseover', m.onMouseOver);
+					if(m.onDragStart != null) marker.addListener('dragstart', m.onDragStart);
+					if(m.onDrag != null) marker.addListener('drag', m.onDrag);
+					if(m.onDragEnd != null) marker.addListener('dragend', m.onDragEnd);
 					
+					marker.setClickable(m.clickable);
+					marker.setDraggable(m.draggable);
 					marker.setPosition(m.position);
 					marker.setMap(map);
 					
