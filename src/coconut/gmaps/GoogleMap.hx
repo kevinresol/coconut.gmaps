@@ -13,12 +13,19 @@ private typedef Data = {
 	var defaultCenter(default, never):LatLngLiteral;
 	var defaultZoom(default, never):Float;
 	@:optional var markers(default, never):Value<List<Marker>>;
+	@:optional var polygons(default, never):Value<List<Polygon>>;
 }
 
-@:forward
-abstract MarkerRef({ref:google.maps.Marker, binding:CallbackLink}) from {ref:google.maps.Marker, binding:CallbackLink} {
-	public inline function new() {
-		this = {ref: new google.maps.Marker(), binding: null}
+private typedef RefTarget = {
+	function setMap(v:google.maps.Map):Void;
+}
+
+private class Ref<T:RefTarget> {
+	public var ref(default, null):T;
+	public var binding:CallbackLink;
+	
+	public function new(ref) {
+		this.ref = ref;
 	}
 	
 	// this function makes sure there is at most only one listener for an event
@@ -36,11 +43,26 @@ abstract MarkerRef({ref:google.maps.Marker, binding:CallbackLink}) from {ref:goo
 	}
 }
 
+@:forward
+abstract MarkerRef(Ref<google.maps.Marker>) {
+	public inline function new() {
+		this = new Ref(new google.maps.Marker());
+	}
+}
+
+@:forward
+abstract PolygonRef(Ref<google.maps.Polygon>) {
+	public inline function new() {
+		this = new Ref(new google.maps.Polygon());
+	}
+}
+
 class GoogleMap extends vdom.Foreign {
 	
 	var data:Data;
 	var map:google.maps.Map;
 	var markers:Array<MarkerRef> = [];
+	var polygons:Array<PolygonRef> = [];
 	var binding:CallbackLink = null;
 	
 	public function new(data:Data) {
@@ -49,6 +71,11 @@ class GoogleMap extends vdom.Foreign {
 	}
 	
 	function setupBindings() {
+		setupMarkerBindings();
+		setupPolygonBindings();
+	}
+	
+	inline function setupMarkerBindings() {
 		if(data.markers != null) {
 			binding = binding & data.markers.bind(null, function(v) {
 				var i = 0;
@@ -103,6 +130,58 @@ class GoogleMap extends vdom.Foreign {
 		} else {
 			// clean up all marker instances
 			for(marker in markers) marker.reset();
+		}
+	}
+	
+	inline function setupPolygonBindings() {
+		if(data.polygons != null) {
+			binding = binding & data.polygons.bind(null, function(v) {
+				var i = 0;
+				for(m in v) {
+					// grab a polygon ref
+					var ref = 
+						if(polygons.length > i) {
+							var reused = polygons[i];
+							reused.reset();
+							reused;
+						} else 
+							polygons[i] = new PolygonRef();
+					
+					var polygon = ref.ref;
+					var obs = m.observables;
+					
+					untyped console.log(polygon.setClickable);
+					
+					// refresh polygon when data changes
+					ref.binding = [
+						obs.onClick.bind(ref.listen.bind('click')),
+						obs.onDoubleClick.bind(ref.listen.bind('dblclick')),
+						obs.onRightClick.bind(ref.listen.bind('rightclick')),
+						obs.onMouseDown.bind(ref.listen.bind('mousedown')),
+						obs.onMouseOut.bind(ref.listen.bind('mouseout')),
+						obs.onMouseUp.bind(ref.listen.bind('mouseup')),
+						obs.onMouseOver.bind(ref.listen.bind('mouseover')),
+						obs.onDragStart.bind(ref.listen.bind('dragstart')),
+						obs.onDrag.bind(ref.listen.bind('drag')),
+						obs.onDragEnd.bind(ref.listen.bind('dragend')),
+						obs.draggable.bind(polygon.setDraggable),
+						obs.editable.bind(polygon.setEditable),
+						obs.paths.bind(null, function(v) polygon.setPaths([for(v in v) v.toArray()])),
+						obs.visible.bind(polygon.setVisible),
+					];
+					
+					// enable the polygon
+					polygon.setMap(map);
+					
+					i++;
+				}
+				
+				// clean up unused polygon instances
+				for(j in i...polygons.length) polygons[j].reset();
+			});
+		} else {
+			// clean up all polygon instances
+			for(polygon in polygons) polygon.reset();
 		}
 	}
 	

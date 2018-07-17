@@ -44,6 +44,8 @@ enum MarkerShape {
 class MarkerShapeTools {
 	public static function toGoogle(shape:MarkerShape):google.maps.MarkerShape {
 		return switch shape {
+			case null:
+				null;
 			case Circle(x, y, r):
 				{
 					coords: [x, y, r],
