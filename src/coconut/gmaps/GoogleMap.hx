@@ -4,6 +4,7 @@ import coconut.data.*;
 import google.maps.Event;
 import google.maps.LatLng;
 
+using coconut.gmaps.Marker;
 using tink.CoreApi;
 
 private typedef Data = {
@@ -76,9 +77,18 @@ class GoogleMap extends vdom.Foreign {
 						obs.onDragStart.bind(ref.listen.bind('dragstart')),
 						obs.onDrag.bind(ref.listen.bind('drag')),
 						obs.onDragEnd.bind(ref.listen.bind('dragend')),
+						obs.animation.bind(marker.setAnimation),
 						obs.clickable.bind(marker.setClickable),
+						obs.cursor.bind(marker.setCursor),
 						obs.draggable.bind(marker.setDraggable),
+						obs.icon.bind(marker.setIcon),
+						obs.label.bind(marker.setLabel),
+						obs.opacity.bind(marker.setOpacity),
 						obs.position.bind(marker.setPosition),
+						obs.shape.bind(function(v) marker.setShape(v.toGoogle())),
+						obs.title.bind(marker.setTitle),
+						obs.visible.bind(marker.setVisible),
+						obs.zIndex.bind(marker.setZIndex),
 					];
 					
 					// enable the marker
