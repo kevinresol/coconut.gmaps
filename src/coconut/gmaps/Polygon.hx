@@ -2,24 +2,27 @@ package coconut.gmaps;
 
 import google.maps.*;
 import google.maps.LatLng;
+import coconut.gmaps.Object;
 import tink.pure.*;
 
-class Polygon implements coconut.data.Model {
-	@:constant var draggable:Bool = @byDefault false;
-	@:constant var editable:Bool = @byDefault false;
-	@:external var paths:List<List<LatLngLiteral>>;
-	@:constant var visible:Bool = @byDefault true;
+typedef PolygonData = {
 	
-	@:constant var onClick:MouseEvent->Void = @byDefault null;
-	@:constant var onDoubleClick:MouseEvent->Void = @byDefault null;
-	@:constant var onRightClick:MouseEvent->Void = @byDefault null;
-	
-	@:constant var onMouseDown:MouseEvent->Void = @byDefault null;
-	@:constant var onMouseOut:MouseEvent->Void = @byDefault null;
-	@:constant var onMouseUp:MouseEvent->Void = @byDefault null;
-	@:constant var onMouseOver:MouseEvent->Void = @byDefault null;
-	
-	@:constant var onDragStart:MouseEvent->Void = @byDefault null;
-	@:constant var onDrag:MouseEvent->Void = @byDefault null;
-	@:constant var onDragEnd:MouseEvent->Void = @byDefault null;
+	@:optional var draggable:Bool;
+	@:optional var editable:Bool;
+	@:optional var paths:List<List<LatLngLiteral>>;
+	@:optional var visible:Bool;
+	@:optional var onClick:MouseEvent->Void;
+	@:optional var onDoubleClick:MouseEvent->Void;
+	@:optional var onRightClick:MouseEvent->Void;
+	@:optional var onMouseDown:MouseEvent->Void;
+	@:optional var onMouseOut:MouseEvent->Void;
+	@:optional var onMouseUp:MouseEvent->Void;
+	@:optional var onMouseOver:MouseEvent->Void;
+	@:optional var onDragStart:MouseEvent->Void;
+	@:optional var onDrag:MouseEvent->Void;
+	@:optional var onDragEnd:MouseEvent->Void;
+}
+
+class Polygon extends ObjectBase<PolygonData> {
+	override function toType() return OPolygon(this);
 }

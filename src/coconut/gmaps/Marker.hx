@@ -2,37 +2,39 @@ package coconut.gmaps;
 
 import google.maps.MouseEvent;
 import google.maps.LatLng;
+import coconut.gmaps.Object;
 import tink.pure.*;
 
 using tink.CoreApi;
 
-class Marker implements coconut.data.Model {
-	
-	@:constant var animation:String = @byDefault null;
-	@:constant var clickable:Bool = @byDefault true;
-	@:constant var cursor:String = @byDefault null;
-	@:constant var draggable:Bool = @byDefault false;
-	@:constant var icon:String = @byDefault null;
-	@:constant var label:String = @byDefault null;
-	@:constant var opacity:Float = @byDefault null;
-	@:external var position:LatLngLiteral;
-	@:constant var shape:MarkerShape = null;
-	@:constant var title:String = @byDefault null;
-	@:constant var visible:Bool = @byDefault null;
-	@:constant var zIndex:Int = @byDefault null;
-	
-	@:constant var onClick:MouseEvent->Void = @byDefault null;
-	@:constant var onDoubleClick:MouseEvent->Void = @byDefault null;
-	@:constant var onRightClick:MouseEvent->Void = @byDefault null;
-	
-	@:constant var onMouseDown:MouseEvent->Void = @byDefault null;
-	@:constant var onMouseOut:MouseEvent->Void = @byDefault null;
-	@:constant var onMouseUp:MouseEvent->Void = @byDefault null;
-	@:constant var onMouseOver:MouseEvent->Void = @byDefault null;
-	
-	@:constant var onDragStart:MouseEvent->Void = @byDefault null;
-	@:constant var onDrag:MouseEvent->Void = @byDefault null;
-	@:constant var onDragEnd:MouseEvent->Void = @byDefault null;
+typedef MarkerData = {
+	@:optional var animation:String;
+	@:optional var clickable:Bool;
+	@:optional var cursor:String;
+	@:optional var draggable:Bool;
+	@:optional var icon:String;
+	@:optional var label:String;
+	@:optional var opacity:Float;
+	@:optional var position:LatLngLiteral;
+	@:optional var shape:MarkerShape;
+	@:optional var title:String;
+	@:optional var visible:Bool;
+	@:optional var zIndex:Int;
+	@:optional var onClick:MouseEvent->Void;
+	@:optional var onDoubleClick:MouseEvent->Void;
+	@:optional var onRightClick:MouseEvent->Void;
+	@:optional var onMouseDown:MouseEvent->Void;
+	@:optional var onMouseOut:MouseEvent->Void;
+	@:optional var onMouseUp:MouseEvent->Void;
+	@:optional var onMouseOver:MouseEvent->Void;
+	@:optional var onDragStart:MouseEvent->Void;
+	@:optional var onDrag:MouseEvent->Void;
+	@:optional var onDragEnd:MouseEvent->Void;
+	@:optional var children:Array<Object>;
+}
+
+class Marker extends ObjectBase<MarkerData> {
+	override function toType() return OMarker(this);
 }
 
 enum MarkerShape {

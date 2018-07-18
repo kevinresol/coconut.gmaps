@@ -1,11 +1,17 @@
 package coconut.gmaps;
 
+import google.maps.*;
 import google.maps.LatLng;
+import coconut.gmaps.Object;
+import tink.pure.*;
 
-class InfoWindow implements coconut.data.Model {
-	@:constant var content:coconut.ui.RenderResult;
-	@:constant var position:LatLngLiteral = @byDefault null;
-	@:constant var zIndex:Int = @byDefault null;
-	
-	@:constant var onCloseClick:Void->Void = @byDefault null;
+typedef InfoWindowData = {
+	@:optional var children:coconut.ui.RenderResult;
+	@:optional var position:LatLngLiteral;
+	@:optional var zIndex:Int;
+	@:optional var onCloseClick:Void->Void;
+}
+
+class InfoWindow extends ObjectBase<InfoWindowData> {
+	override function toType() return OInfoWindow(this);
 }

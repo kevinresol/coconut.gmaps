@@ -6,20 +6,20 @@ import google.maps.LatLng;
 
 using coconut.gmaps.Marker;
 using tink.CoreApi;
+using Lambda;
 
 private typedef Data = {
 	@:optional var className(default, never):String;
 	@:optional var style(default, never):String;
 	var defaultCenter(default, never):LatLngLiteral;
 	var defaultZoom(default, never):Float;
-	@:optional var markers(default, never):Value<List<Marker>>;
-	@:optional var polygons(default, never):Value<List<Polygon>>;
-	@:optional var infoWindows(default, never):Value<List<InfoWindow>>;
+	@:optional var children(default, never):Array<Object>;
 }
 
-private class Ref<T> {
+private class Ref<T, Data> {
 	public var ref(default, null):T;
 	public var binding:CallbackLink;
+	public var data:Data;
 	var close:T->Void;
 	
 	public function new(ref, close) {
@@ -43,21 +43,21 @@ private class Ref<T> {
 }
 
 @:forward
-abstract MarkerRef(Ref<google.maps.Marker>) {
+abstract MarkerRef(Ref<google.maps.Marker, Marker>) {
 	public inline function new() {
 		this = new Ref(new google.maps.Marker(), function(v) v.setMap(null));
 	}
 }
 
 @:forward
-abstract PolygonRef(Ref<google.maps.Polygon>) {
+abstract PolygonRef(Ref<google.maps.Polygon, Polygon>) {
 	public inline function new() {
 		this = new Ref(new google.maps.Polygon(), function(v) v.setMap(null));
 	}
 }
 
 @:forward
-abstract InfoWindowRef(Ref<google.maps.InfoWindow>) {
+abstract InfoWindowRef(Ref<google.maps.InfoWindow, InfoWindow>) {
 	public inline function new() {
 		this = new Ref(new google.maps.InfoWindow(), function(v) v.close());
 	}
@@ -77,158 +77,153 @@ class GoogleMap extends vdom.Foreign {
 		this.data = data;
 	}
 	
-	function setupBindings() {
-		setupMarkerBindings();
-		setupPolygonBindings();
-		setupInfoWindowBindings();
+	function refresh() {
+		var markers = [];
+		var polygons = [];
+		var infoWindows = [];
+		if(data.children != null) for(o in data.children) switch o.toType() {
+			case OMarker(marker):
+				markers.push(marker);
+				if(marker.data.children != null) for(o in marker.data.children) switch o.toType() {
+					case OInfoWindow(infoWindow):
+						infoWindows.push({window: infoWindow, anchor: marker});
+					case _: // TODO
+				}
+			case OPolygon(polygon):
+				polygons.push(polygon);
+			case OInfoWindow(infoWindow):
+				infoWindows.push({window: infoWindow, anchor: null});
+		}
+		refreshMarkers(markers);
+		refreshPolygons(polygons);
+		refreshInfoWindows(infoWindows);
+		
+		trace(markers.length, infoWindows.length);
 	}
 	
-	inline function setupMarkerBindings() {
-		if(data.markers != null) {
-			binding = binding & data.markers.bind(null, function(v) {
-				var i = 0;
-				for(m in v) {
-					// grab a marker ref
-					var ref = 
-						if(markers.length > i) {
-							var reused = markers[i];
-							reused.reset();
-							reused;
-						} else 
-							markers[i] = new MarkerRef();
+	inline function refreshMarkers(data:Array<Marker>) {
+		var i = 0;
+		
+		for(v in data) {
+			var ref = 
+				if(markers.length > i) {
+					var reused = markers[i];
+					reused.reset();
+					reused;
+				} else 
+					markers[i] = new MarkerRef();
 					
-					var marker = ref.ref;
-					var obs = m.observables;
-					
-					// refresh marker when data changes
-					ref.binding = [
-						obs.onClick.bind(ref.listen.bind('click')),
-						obs.onDoubleClick.bind(ref.listen.bind('dblclick')),
-						obs.onRightClick.bind(ref.listen.bind('rightclick')),
-						obs.onMouseDown.bind(ref.listen.bind('mousedown')),
-						obs.onMouseOut.bind(ref.listen.bind('mouseout')),
-						obs.onMouseUp.bind(ref.listen.bind('mouseup')),
-						obs.onMouseOver.bind(ref.listen.bind('mouseover')),
-						obs.onDragStart.bind(ref.listen.bind('dragstart')),
-						obs.onDrag.bind(ref.listen.bind('drag')),
-						obs.onDragEnd.bind(ref.listen.bind('dragend')),
-						obs.animation.bind(marker.setAnimation),
-						obs.clickable.bind(marker.setClickable),
-						obs.cursor.bind(marker.setCursor),
-						obs.draggable.bind(marker.setDraggable),
-						obs.icon.bind(marker.setIcon),
-						obs.label.bind(marker.setLabel),
-						obs.opacity.bind(marker.setOpacity),
-						obs.position.bind(marker.setPosition),
-						obs.shape.bind(function(v) marker.setShape(v.toGoogle())),
-						obs.title.bind(marker.setTitle),
-						obs.visible.bind(marker.setVisible),
-						obs.zIndex.bind(marker.setZIndex),
-					];
-					
-					// enable the marker
-					marker.setMap(map);
-					
-					i++;
-				}
+			ref.data = v;
+			var data = v.data;
+			var marker = ref.ref;
+			
+			ref.listen('click', data.onClick);
+			ref.listen('dblclick', data.onDoubleClick);
+			ref.listen('rightclick', data.onRightClick);
+			ref.listen('mousedown', data.onMouseDown);
+			ref.listen('mouseout', data.onMouseOut);
+			ref.listen('mouseup', data.onMouseUp);
+			ref.listen('mouseover', data.onMouseOver);
+			ref.listen('dragstart', data.onDragStart);
+			ref.listen('drag', data.onDrag);
+			ref.listen('dragend', data.onDragEnd);
+			marker.setAnimation(data.animation);
+			marker.setClickable(data.clickable);
+			marker.setCursor(data.cursor);
+			marker.setDraggable(data.draggable);
+			marker.setIcon(data.icon);
+			marker.setLabel(data.label);
+			marker.setOpacity(data.opacity);
+			marker.setPosition(data.position);
+			marker.setShape(data.shape.toGoogle());
+			marker.setTitle(data.title);
+			marker.setVisible(data.visible);
+			marker.setZIndex(data.zIndex);
 				
-				// clean up unused marker instances
-				for(j in i...markers.length) markers[j].reset();
-			});
-		} else {
-			// clean up all marker instances
-			for(marker in markers) marker.reset();
+			// enable the marker
+			marker.setMap(map);
+			
+			i++;
 		}
+		
+		// clean up unused marker instances
+		for(j in i...markers.length) markers[j].reset();
 	}
 	
-	inline function setupPolygonBindings() {
-		if(data.polygons != null) {
-			binding = binding & data.polygons.bind(null, function(v) {
-				var i = 0;
-				for(m in v) {
-					// grab a polygon ref
-					var ref = 
-						if(polygons.length > i) {
-							var reused = polygons[i];
-							reused.reset();
-							reused;
-						} else 
-							polygons[i] = new PolygonRef();
-					
-					var polygon = ref.ref;
-					var obs = m.observables;
-					
-					// refresh polygon when data changes
-					ref.binding = [
-						obs.onClick.bind(ref.listen.bind('click')),
-						obs.onDoubleClick.bind(ref.listen.bind('dblclick')),
-						obs.onRightClick.bind(ref.listen.bind('rightclick')),
-						obs.onMouseDown.bind(ref.listen.bind('mousedown')),
-						obs.onMouseOut.bind(ref.listen.bind('mouseout')),
-						obs.onMouseUp.bind(ref.listen.bind('mouseup')),
-						obs.onMouseOver.bind(ref.listen.bind('mouseover')),
-						obs.onDragStart.bind(ref.listen.bind('dragstart')),
-						obs.onDrag.bind(ref.listen.bind('drag')),
-						obs.onDragEnd.bind(ref.listen.bind('dragend')),
-						obs.draggable.bind(polygon.setDraggable),
-						obs.editable.bind(polygon.setEditable),
-						obs.paths.bind(null, function(v) polygon.setPaths([for(v in v) v.toArray()])),
-						obs.visible.bind(polygon.setVisible),
-					];
-					
-					// enable the polygon
-					polygon.setMap(map);
-					
-					i++;
-				}
+	inline function refreshPolygons(data:Array<Polygon>) {
+		var i = 0;
+		
+		for(v in data) {
+			var ref = 
+				if(polygons.length > i) {
+					var reused = polygons[i];
+					reused.reset();
+					reused;
+				} else
+					polygons[i] = new PolygonRef();
 				
-				// clean up unused polygon instances
-				for(j in i...polygons.length) polygons[j].reset();
-			});
-		} else {
-			// clean up all polygon instances
-			for(polygon in polygons) polygon.reset();
+			ref.data = v;
+			var data = v.data;
+			var polygon = ref.ref;
+			
+			
+			ref.listen.bind('click', data.onClick);
+			ref.listen.bind('dblclick', data.onDoubleClick);
+			ref.listen.bind('rightclick', data.onRightClick);
+			ref.listen.bind('mousedown', data.onMouseDown);
+			ref.listen.bind('mouseout', data.onMouseOut);
+			ref.listen.bind('mouseup', data.onMouseUp);
+			ref.listen.bind('mouseover', data.onMouseOver);
+			ref.listen.bind('dragstart', data.onDragStart);
+			ref.listen.bind('drag', data.onDrag);
+			ref.listen.bind('dragend', data.onDragEnd);
+			polygon.setDraggable(data.draggable);
+			polygon.setEditable(data.editable);
+			polygon.setPaths([for(v in data.paths) v.toArray()]);
+			polygon.setVisible(data.visible);
+				
+			// enable the polygon
+			polygon.setMap(map);
+			
+			i++;
 		}
+		
+		// clean up unused polygon instances
+		for(j in i...polygons.length) polygons[j].reset();
 	}
 	
-	inline function setupInfoWindowBindings() {
-		if(data.infoWindows != null) {
-			binding = binding & data.infoWindows.bind(null, function(v) {
-				var i = 0;
-				for(m in v) {
-					// grab a infoWindow ref
-					var ref = 
-						if(infoWindows.length > i) {
-							var reused = infoWindows[i];
-							reused.reset();
-							reused;
-						} else 
-							infoWindows[i] = new InfoWindowRef();
-					
-					var infoWindow = ref.ref;
-					var obs = m.observables;
-					
-					// refresh infoWindow when data changes
-					ref.binding = [
-						obs.onCloseClick.bind(ref.listen.bind('closeclick')),
-						obs.content.bind(null, function(v) infoWindow.setContent(v.toElement())),
-						obs.position.bind(infoWindow.setPosition),
-						obs.zIndex.bind(infoWindow.setZIndex),
-					];
-					
-					// enable the infoWindow
-					infoWindow.open(map);
-					
-					i++;
-				}
+	
+	inline function refreshInfoWindows(data:Array<{window:InfoWindow, anchor:Marker}>) {
+		var i = 0;
+		
+		for(v in data) {
+			var ref = 
+				if(infoWindows.length > i) {
+					var reused = infoWindows[i];
+					reused.reset();
+					reused;
+				} else
+					infoWindows[i] = new InfoWindowRef();
 				
-				// clean up unused infoWindow instances
-				for(j in i...infoWindows.length) infoWindows[j].reset();
-			});
-		} else {
-			// clean up all infoWindow instances
-			for(infoWindow in infoWindows) infoWindow.reset();
+			ref.data = v.window;
+			var data = v.window.data;
+			var infoWindow = ref.ref;
+			
+			
+			ref.listen.bind('closeclick', data.onCloseClick);
+			infoWindow.setContent(data.children.toElement());
+			infoWindow.setPosition(data.position);
+			infoWindow.setZIndex(data.zIndex);
+				
+			// enable the infoWindow
+			var anchor = markers.find(function(m) return m.data == v.anchor);
+			infoWindow.open(map, anchor == null ? null : anchor.ref);
+			
+			i++;
 		}
+		
+		// clean up unused infoWindow instances
+		for(j in i...infoWindows.length) infoWindows[j].reset();
 	}
 	
 	override function init() {
@@ -241,7 +236,7 @@ class GoogleMap extends vdom.Foreign {
 			zoom: data.defaultZoom,
 		});
 		
-		setupBindings();
+		refresh();
 		
 		return element;
 	}
@@ -253,8 +248,10 @@ class GoogleMap extends vdom.Foreign {
 				element = that.element;
 				map = that.map;
 				markers = that.markers;
+				polygons = that.polygons;
+				infoWindows = that.infoWindows;
 				that.destroy();
-				setupBindings();
+				refresh();
 		}
 		
 		return element;
@@ -265,6 +262,8 @@ class GoogleMap extends vdom.Foreign {
 		element = null;
 		map = null;
 		markers = null;
+		polygons = null;
+		infoWindows = null;
 		binding.dissolve();
 	}
 }
