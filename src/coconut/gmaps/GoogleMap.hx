@@ -70,15 +70,18 @@ abstract DrawingManagerRef(Ref<google.maps.drawing.DrawingManager, DrawingManage
 	}
 }
 
-class GoogleMap extends vdom.Foreign {
-	
-	var data:Data;
-	var map:google.maps.Map;
+private typedef Context = {
 	var markers:Array<MarkerRef>;
 	var polygons:Array<PolygonRef>;
 	var infoWindows:Array<InfoWindowRef>;
 	var drawingManager:DrawingManagerRef;
-	var binding:CallbackLink = null;
+}
+
+class GoogleMap extends vdom.Foreign {
+	
+	var data:Data;
+	var map:google.maps.Map;
+	var ctx:Context;
 	
 	public function new(data:Data) {
 		super(null);
@@ -112,17 +115,15 @@ class GoogleMap extends vdom.Foreign {
 	}
 	
 	inline function refreshMarkers(data:Array<Marker>) {
-		if(markers == null) markers = [];
-		
 		var i = 0;
 		for(v in data) {
 			var ref = 
-				if(markers.length > i) {
-					var reused = markers[i];
+				if(ctx.markers.length > i) {
+					var reused = ctx.markers[i];
 					reused.reset(false);
 					reused;
 				} else 
-					markers[i] = new MarkerRef();
+					ctx.markers[i] = new MarkerRef();
 					
 			ref.data = v;
 			var data = v.data;
@@ -158,21 +159,19 @@ class GoogleMap extends vdom.Foreign {
 		}
 		
 		// clean up unused marker instances
-		for(j in i...markers.length) markers[j].reset();
+		for(j in i...ctx.markers.length) ctx.markers[j].reset();
 	}
 	
 	inline function refreshPolygons(data:Array<Polygon>) {
-		if(polygons == null) polygons = [];
-		
 		var i = 0;
 		for(v in data) {
 			var ref = 
-				if(polygons.length > i) {
-					var reused = polygons[i];
+				if(ctx.polygons.length > i) {
+					var reused = ctx.polygons[i];
 					reused.reset(false);
 					reused;
 				} else
-					polygons[i] = new PolygonRef();
+					ctx.polygons[i] = new PolygonRef();
 				
 			ref.data = v;
 			var data = v.data;
@@ -201,22 +200,20 @@ class GoogleMap extends vdom.Foreign {
 		}
 		
 		// clean up unused polygon instances
-		for(j in i...polygons.length) polygons[j].reset();
+		for(j in i...ctx.polygons.length) ctx.polygons[j].reset();
 	}
 	
 	
 	inline function refreshInfoWindows(data:Array<{window:InfoWindow, anchor:Marker}>) {
-		if(infoWindows == null) infoWindows = [];
-		
 		var i = 0;
 		for(v in data) {
 			var ref = 
-				if(infoWindows.length > i) {
-					var reused = infoWindows[i];
+				if(ctx.infoWindows.length > i) {
+					var reused = ctx.infoWindows[i];
 					reused.reset(false);
 					reused;
 				} else
-					infoWindows[i] = new InfoWindowRef();
+					ctx.infoWindows[i] = new InfoWindowRef();
 				
 			ref.data = v.window;
 			var data = v.window.data;
@@ -229,27 +226,27 @@ class GoogleMap extends vdom.Foreign {
 			infoWindow.setZIndex(data.zIndex);
 				
 			// enable the infoWindow
-			var anchor = markers.find(function(m) return m.data == v.anchor);
+			var anchor = ctx.markers.find(function(m) return m.data == v.anchor);
 			infoWindow.open(map, anchor == null ? null : anchor.ref);
 			
 			i++;
 		}
 		
 		// clean up unused infoWindow instances
-		for(j in i...infoWindows.length) infoWindows[j].reset();
+		for(j in i...ctx.infoWindows.length) ctx.infoWindows[j].reset();
 	}
 	
 	inline function refreshDrawingManager(data:DrawingManager) {
 		if(data != null) {
-			if(drawingManager == null)
-				drawingManager = new DrawingManagerRef();
+			if(ctx.drawingManager == null)
+				ctx.drawingManager = new DrawingManagerRef();
 			else
-				drawingManager.reset(false);
+				ctx.drawingManager.reset(false);
 			
 			// sorry for the shadowing, just wanna be consistent with other functions
-			var ref = drawingManager;
+			var ref = ctx.drawingManager;
 			ref.data = data;
-			var drawingManager = drawingManager.ref;
+			var drawingManager = ctx.drawingManager.ref;
 			var data = data.data;
 			
 			ref.listen('circlecomplete', function(v) {if(data.onCircleComplete != null) data.onCircleComplete(v); v.setMap(null);});
@@ -274,7 +271,7 @@ class GoogleMap extends vdom.Foreign {
 				drawingManager.setDrawingMode(data.drawingMode);
 			
 		} else {
-			if(drawingManager != null) drawingManager.reset();
+			if(ctx.drawingManager != null) ctx.drawingManager.reset();
 		}
 	}
 	
@@ -288,6 +285,13 @@ class GoogleMap extends vdom.Foreign {
 			zoom: data.defaultZoom,
 		});
 		
+		ctx = {
+			markers: [],
+			polygons: [],
+			infoWindows: [],
+			drawingManager: null,
+		}
+		
 		refresh();
 		
 		return element;
@@ -299,10 +303,7 @@ class GoogleMap extends vdom.Foreign {
 			case that:
 				element = that.element;
 				map = that.map;
-				markers = that.markers;
-				polygons = that.polygons;
-				infoWindows = that.infoWindows;
-				drawingManager = that.drawingManager;
+				ctx = that.ctx;
 				that.destroy();
 				refresh();
 		}
@@ -314,10 +315,6 @@ class GoogleMap extends vdom.Foreign {
 		data = null;
 		element = null;
 		map = null;
-		markers = null;
-		polygons = null;
-		infoWindows = null;
-		drawingManager = null;
-		binding.dissolve();
+		ctx = null;
 	}
 }
