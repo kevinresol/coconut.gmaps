@@ -33,9 +33,9 @@ private class Ref<T, Data> {
 		if(f != null) Event.addListener(this.ref, name, f);
 	}
 	
-	public function reset() {
+	public function reset(close = true) {
 		Event.clearInstanceListeners(this.ref);
-		close(ref);
+		if(close) this.close(ref);
 		
 		this.binding.dissolve();
 		this.binding = null;
@@ -63,13 +63,21 @@ abstract InfoWindowRef(Ref<google.maps.InfoWindow, InfoWindow>) {
 	}
 }
 
+@:forward
+abstract DrawingManagerRef(Ref<google.maps.drawing.DrawingManager, DrawingManager>) {
+	public inline function new() {
+		this = new Ref(new google.maps.drawing.DrawingManager(), function(v) v.setMap(null));
+	}
+}
+
 class GoogleMap extends vdom.Foreign {
 	
 	var data:Data;
 	var map:google.maps.Map;
-	var markers:Array<MarkerRef> = [];
-	var polygons:Array<PolygonRef> = [];
-	var infoWindows:Array<InfoWindowRef> = [];
+	var markers:Array<MarkerRef>;
+	var polygons:Array<PolygonRef>;
+	var infoWindows:Array<InfoWindowRef>;
+	var drawingManager:DrawingManagerRef;
 	var binding:CallbackLink = null;
 	
 	public function new(data:Data) {
@@ -81,34 +89,37 @@ class GoogleMap extends vdom.Foreign {
 		var markers = [];
 		var polygons = [];
 		var infoWindows = [];
+		var drawingManager = null;
 		if(data.children != null) for(o in data.children) switch o.toType() {
-			case OMarker(marker):
-				markers.push(marker);
-				if(marker.data.children != null) for(o in marker.data.children) switch o.toType() {
+			case OMarker(v):
+				markers.push(v);
+				if(v.data.children != null) for(o in v.data.children) switch o.toType() {
 					case OInfoWindow(infoWindow):
-						infoWindows.push({window: infoWindow, anchor: marker});
+						infoWindows.push({window: infoWindow, anchor: v});
 					case _: // TODO
 				}
-			case OPolygon(polygon):
-				polygons.push(polygon);
-			case OInfoWindow(infoWindow):
-				infoWindows.push({window: infoWindow, anchor: null});
+			case OPolygon(v):
+				polygons.push(v);
+			case OInfoWindow(v):
+				infoWindows.push({window: v, anchor: null});
+			case ODrawingManager(v):
+				drawingManager = v;
 		}
 		refreshMarkers(markers);
 		refreshPolygons(polygons);
 		refreshInfoWindows(infoWindows);
-		
-		trace(markers.length, infoWindows.length);
+		refreshDrawingManager(drawingManager);
 	}
 	
 	inline function refreshMarkers(data:Array<Marker>) {
-		var i = 0;
+		if(markers == null) markers = [];
 		
+		var i = 0;
 		for(v in data) {
 			var ref = 
 				if(markers.length > i) {
 					var reused = markers[i];
-					reused.reset();
+					reused.reset(false);
 					reused;
 				} else 
 					markers[i] = new MarkerRef();
@@ -151,13 +162,14 @@ class GoogleMap extends vdom.Foreign {
 	}
 	
 	inline function refreshPolygons(data:Array<Polygon>) {
-		var i = 0;
+		if(polygons == null) polygons = [];
 		
+		var i = 0;
 		for(v in data) {
 			var ref = 
 				if(polygons.length > i) {
 					var reused = polygons[i];
-					reused.reset();
+					reused.reset(false);
 					reused;
 				} else
 					polygons[i] = new PolygonRef();
@@ -167,16 +179,16 @@ class GoogleMap extends vdom.Foreign {
 			var polygon = ref.ref;
 			
 			
-			ref.listen.bind('click', data.onClick);
-			ref.listen.bind('dblclick', data.onDoubleClick);
-			ref.listen.bind('rightclick', data.onRightClick);
-			ref.listen.bind('mousedown', data.onMouseDown);
-			ref.listen.bind('mouseout', data.onMouseOut);
-			ref.listen.bind('mouseup', data.onMouseUp);
-			ref.listen.bind('mouseover', data.onMouseOver);
-			ref.listen.bind('dragstart', data.onDragStart);
-			ref.listen.bind('drag', data.onDrag);
-			ref.listen.bind('dragend', data.onDragEnd);
+			ref.listen('click', data.onClick);
+			ref.listen('dblclick', data.onDoubleClick);
+			ref.listen('rightclick', data.onRightClick);
+			ref.listen('mousedown', data.onMouseDown);
+			ref.listen('mouseout', data.onMouseOut);
+			ref.listen('mouseup', data.onMouseUp);
+			ref.listen('mouseover', data.onMouseOver);
+			ref.listen('dragstart', data.onDragStart);
+			ref.listen('drag', data.onDrag);
+			ref.listen('dragend', data.onDragEnd);
 			polygon.setDraggable(data.draggable);
 			polygon.setEditable(data.editable);
 			polygon.setPaths([for(v in data.paths) v.toArray()]);
@@ -194,13 +206,14 @@ class GoogleMap extends vdom.Foreign {
 	
 	
 	inline function refreshInfoWindows(data:Array<{window:InfoWindow, anchor:Marker}>) {
-		var i = 0;
+		if(infoWindows == null) infoWindows = [];
 		
+		var i = 0;
 		for(v in data) {
 			var ref = 
 				if(infoWindows.length > i) {
 					var reused = infoWindows[i];
-					reused.reset();
+					reused.reset(false);
 					reused;
 				} else
 					infoWindows[i] = new InfoWindowRef();
@@ -210,7 +223,7 @@ class GoogleMap extends vdom.Foreign {
 			var infoWindow = ref.ref;
 			
 			
-			ref.listen.bind('closeclick', data.onCloseClick);
+			ref.listen('closeclick', data.onCloseClick);
 			infoWindow.setContent(data.children.toElement());
 			infoWindow.setPosition(data.position);
 			infoWindow.setZIndex(data.zIndex);
@@ -224,6 +237,45 @@ class GoogleMap extends vdom.Foreign {
 		
 		// clean up unused infoWindow instances
 		for(j in i...infoWindows.length) infoWindows[j].reset();
+	}
+	
+	inline function refreshDrawingManager(data:DrawingManager) {
+		if(data != null) {
+			if(drawingManager == null)
+				drawingManager = new DrawingManagerRef();
+			else
+				drawingManager.reset(false);
+			
+			// sorry for the shadowing, just wanna be consistent with other functions
+			var ref = drawingManager;
+			ref.data = data;
+			var drawingManager = drawingManager.ref;
+			var data = data.data;
+			
+			ref.listen('circlecomplete', function(v) {if(data.onCircleComplete != null) data.onCircleComplete(v); v.setMap(null);});
+			ref.listen('markercomplete', function(v) {if(data.onMarkerComplete != null) data.onMarkerComplete(v); v.setMap(null);});
+			ref.listen('polygoncomplete', function(v) {if(data.onPolygonComplete != null) data.onPolygonComplete(v); v.setMap(null);});
+			ref.listen('polylinecomplete', function(v) {if(data.onPolylineComplete != null) data.onPolylineComplete(v); v.setMap(null);});
+			ref.listen('rectanglecomplete', function(v) {if(data.onRectangleComplete != null) data.onRectangleComplete(v); v.setMap(null);});
+			// ref.listen('overlaycomplete', data.onOverlayComplete);
+			
+			drawingManager.setOptions({
+				drawingControl: data.drawingControl,	
+				drawingControlOptions: data.drawingControlOptions,	
+				map: map,
+				// circleOptions: data.circleOptions,	
+				// markerOptions: data.markerOptions,	
+				// polygonOptions: data.polygonOptions,	
+				// polylineOptions: data.polylineOptions,	
+				// rectangleOptions: data.rectangleOptions,
+			});
+			
+			if(drawingManager.getDrawingMode() != data.drawingMode)
+				drawingManager.setDrawingMode(data.drawingMode);
+			
+		} else {
+			if(drawingManager != null) drawingManager.reset();
+		}
 	}
 	
 	override function init() {
@@ -250,6 +302,7 @@ class GoogleMap extends vdom.Foreign {
 				markers = that.markers;
 				polygons = that.polygons;
 				infoWindows = that.infoWindows;
+				drawingManager = that.drawingManager;
 				that.destroy();
 				refresh();
 		}
@@ -264,6 +317,7 @@ class GoogleMap extends vdom.Foreign {
 		markers = null;
 		polygons = null;
 		infoWindows = null;
+		drawingManager = null;
 		binding.dissolve();
 	}
 }

@@ -13,7 +13,8 @@ class ObjectBase<T> implements Object {
 }
 
 enum ObjectType {
-	OMarker(marker:Marker);
-	OPolygon(polygon:Polygon);
-	OInfoWindow(infoWindow:InfoWindow);
+	OMarker(v:Marker);
+	OPolygon(v:Polygon);
+	OInfoWindow(v:InfoWindow);
+	ODrawingManager(v:DrawingManager);
 }

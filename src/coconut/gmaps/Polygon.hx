@@ -1,5 +1,6 @@
 package coconut.gmaps;
 
+import haxe.extern.*;
 import google.maps.*;
 import google.maps.LatLng;
 import coconut.gmaps.Object;

@@ -30,6 +30,9 @@ class Playground extends coconut.ui.View {
 							</InfoWindow>
 						</Marker>
 					</for>
+					<for ${paths in polygons}>
+						<Polygon paths=${paths}/>
+					</for>
 					
 					<switch ${markers.first()}>
 						<case ${Some(pos)}>
@@ -38,18 +41,23 @@ class Playground extends coconut.ui.View {
 							</InfoWindow>
 						<case ${_}>
 					</switch>
+					<DrawingManager
+						drawingMode=${POLYGON}
+						drawingControlOptions=${{drawingModes: [POLYGON]}}
+						onPolygonComplete=${v -> polygons = polygons.append([for(v in v.getPaths().getArray()) List.fromArray(v.getArray().map(v -> {lat: v.lat(), lng: v.lng()}))])}
+					/>
 				</GoogleMap>
 			</div>
 		';
 	}
 	
 	override function afterInit(e) {
-		var timer = new haxe.Timer(5000);
+		var timer = new haxe.Timer(1000);
 		var count 	= 1;
 		timer.run = function() {
 			inline function rand(f:Float) return (Math.random() - 0.5) * f;
 			markers = [for(i in 0...count % 3) {lat: 22.4254815 + rand(0.01), lng: 114.212813 + rand(0.01)}];
-			polygons = [[[for(i in 0...3) {lat: 22.4254815 + rand(0.01), lng: 114.212813 + rand(0.01)}]]];
+			// polygons = [[[for(i in 0...3) {lat: 22.4254815 + rand(0.01), lng: 114.212813 + rand(0.01)}]]];
 			count++;
 		}
 	}
