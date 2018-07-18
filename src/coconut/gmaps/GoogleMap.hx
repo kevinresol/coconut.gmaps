@@ -14,18 +14,17 @@ private typedef Data = {
 	var defaultZoom(default, never):Float;
 	@:optional var markers(default, never):Value<List<Marker>>;
 	@:optional var polygons(default, never):Value<List<Polygon>>;
+	@:optional var infoWindows(default, never):Value<List<InfoWindow>>;
 }
 
-private typedef RefTarget = {
-	function setMap(v:google.maps.Map):Void;
-}
-
-private class Ref<T:RefTarget> {
+private class Ref<T> {
 	public var ref(default, null):T;
 	public var binding:CallbackLink;
+	var close:T->Void;
 	
-	public function new(ref) {
+	public function new(ref, close) {
 		this.ref = ref;
+		this.close = close;
 	}
 	
 	// this function makes sure there is at most only one listener for an event
@@ -36,7 +35,7 @@ private class Ref<T:RefTarget> {
 	
 	public function reset() {
 		Event.clearInstanceListeners(this.ref);
-		this.ref.setMap(null);
+		close(ref);
 		
 		this.binding.dissolve();
 		this.binding = null;
@@ -46,14 +45,21 @@ private class Ref<T:RefTarget> {
 @:forward
 abstract MarkerRef(Ref<google.maps.Marker>) {
 	public inline function new() {
-		this = new Ref(new google.maps.Marker());
+		this = new Ref(new google.maps.Marker(), function(v) v.setMap(null));
 	}
 }
 
 @:forward
 abstract PolygonRef(Ref<google.maps.Polygon>) {
 	public inline function new() {
-		this = new Ref(new google.maps.Polygon());
+		this = new Ref(new google.maps.Polygon(), function(v) v.setMap(null));
+	}
+}
+
+@:forward
+abstract InfoWindowRef(Ref<google.maps.InfoWindow>) {
+	public inline function new() {
+		this = new Ref(new google.maps.InfoWindow(), function(v) v.close());
 	}
 }
 
@@ -63,6 +69,7 @@ class GoogleMap extends vdom.Foreign {
 	var map:google.maps.Map;
 	var markers:Array<MarkerRef> = [];
 	var polygons:Array<PolygonRef> = [];
+	var infoWindows:Array<InfoWindowRef> = [];
 	var binding:CallbackLink = null;
 	
 	public function new(data:Data) {
@@ -73,6 +80,7 @@ class GoogleMap extends vdom.Foreign {
 	function setupBindings() {
 		setupMarkerBindings();
 		setupPolygonBindings();
+		setupInfoWindowBindings();
 	}
 	
 	inline function setupMarkerBindings() {
@@ -150,8 +158,6 @@ class GoogleMap extends vdom.Foreign {
 					var polygon = ref.ref;
 					var obs = m.observables;
 					
-					untyped console.log(polygon.setClickable);
-					
 					// refresh polygon when data changes
 					ref.binding = [
 						obs.onClick.bind(ref.listen.bind('click')),
@@ -182,6 +188,46 @@ class GoogleMap extends vdom.Foreign {
 		} else {
 			// clean up all polygon instances
 			for(polygon in polygons) polygon.reset();
+		}
+	}
+	
+	inline function setupInfoWindowBindings() {
+		if(data.infoWindows != null) {
+			binding = binding & data.infoWindows.bind(null, function(v) {
+				var i = 0;
+				for(m in v) {
+					// grab a infoWindow ref
+					var ref = 
+						if(infoWindows.length > i) {
+							var reused = infoWindows[i];
+							reused.reset();
+							reused;
+						} else 
+							infoWindows[i] = new InfoWindowRef();
+					
+					var infoWindow = ref.ref;
+					var obs = m.observables;
+					
+					// refresh infoWindow when data changes
+					ref.binding = [
+						obs.onCloseClick.bind(ref.listen.bind('closeclick')),
+						obs.content.bind(null, function(v) infoWindow.setContent(v.toElement())),
+						obs.position.bind(infoWindow.setPosition),
+						obs.zIndex.bind(infoWindow.setZIndex),
+					];
+					
+					// enable the infoWindow
+					infoWindow.open(map);
+					
+					i++;
+				}
+				
+				// clean up unused infoWindow instances
+				for(j in i...infoWindows.length) infoWindows[j].reset();
+			});
+		} else {
+			// clean up all infoWindow instances
+			for(infoWindow in infoWindows) infoWindow.reset();
 		}
 	}
 	

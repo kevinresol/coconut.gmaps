@@ -14,16 +14,34 @@ class Playground extends coconut.ui.View {
 	@:state var polygons:List<Polygon> = [];
 	
 	function render() {
-		trace('Playground render()');
 		return @hxx '
 			<div style="height:100%;width:100%">
 				<GoogleMap
 					style="height:100%;width:100%"
 					defaultCenter=${{lat: 22.4254815, lng: 114.212813}}
 					defaultZoom=${15}
-					markers=${markers}
 					polygons=${polygons}
-				/>
+				>
+					<markers>
+						<Marker
+							position=${{lat: 22.4254815, lng: 114.212813}}
+							onClick=${_ -> trace('clicked')}
+							onRightClick=${_ -> trace('rightclicked')}
+							onDoubleClick=${_ -> trace('dblclicked')}
+							draggable=${true}
+							onDrag=${e ->trace(e.latLng.lat(), e.latLng.lng())}
+						/>
+					</markers>
+					<infoWindows>
+						<InfoWindow
+							position=${{lat: 22.4254815, lng: 114.212813}}
+						>
+							<content>
+								<div>Hey</div>
+							</content>
+						</InfoWindow>
+					</infoWindows>
+				</GoogleMap>
 			</div>
 		';
 	}
@@ -60,7 +78,6 @@ class Playground extends coconut.ui.View {
 				new haxe.Timer(16).run = function() 
 					paths.set(paths.value.map(function(v) return v.map(function(v) return {lat: v.lat + rand(0.0001), lng: v.lng + rand(0.0001)})));
 				
-				paths.observe().bind(null, function(v) trace([for(v in v) [for(v in v) v]]));
 				return new Polygon({
 					paths: paths.observe(),
 					onClick: function(_) trace('clicked'),
