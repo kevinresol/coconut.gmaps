@@ -5,6 +5,9 @@ import google.maps.Event;
 import google.maps.LatLng;
 
 using coconut.gmaps.Marker;
+using coconut.gmaps.Polygon;
+using coconut.gmaps.InfoWindow;
+using coconut.gmaps.DrawingManager;
 using tink.CoreApi;
 using Lambda;
 
@@ -20,11 +23,13 @@ private class Ref<T, Data> {
 	public var ref(default, null):T;
 	public var binding:CallbackLink;
 	public var data:Data;
-	var close:T->Void;
+	var doClose:T->Void;
+	var doReset:T->Void;
 	
-	public function new(ref, close) {
+	public function new(ref, doClose, ?doReset) {
 		this.ref = ref;
-		this.close = close;
+		this.doClose = doClose;
+		this.doReset = doReset;
 	}
 	
 	// this function makes sure there is at most only one listener for an event
@@ -35,7 +40,9 @@ private class Ref<T, Data> {
 	
 	public function reset(close = true) {
 		Event.clearInstanceListeners(this.ref);
-		if(close) this.close(ref);
+		if(doReset != null) doReset(ref); // type-specific reset code
+		
+		if(close) doClose(ref);
 		
 		this.binding.dissolve();
 		this.binding = null;
@@ -45,28 +52,114 @@ private class Ref<T, Data> {
 @:forward
 abstract MarkerRef(Ref<google.maps.Marker, Marker>) {
 	public inline function new() {
-		this = new Ref(new google.maps.Marker(), function(v) v.setMap(null));
+		this = new Ref(
+			new google.maps.Marker(),
+			function(v) v.setMap(null)
+		);
+	}
+	
+	public inline function setup(map:google.maps.Map, data:MarkerData) {
+		this.listen('click', data.onClick);
+		this.listen('dblclick', data.onDoubleClick);
+		this.listen('rightclick', data.onRightClick);
+		this.listen('mousedown', data.onMouseDown);
+		this.listen('mouseout', data.onMouseOut);
+		this.listen('mouseup', data.onMouseUp);
+		this.listen('mouseover', data.onMouseOver);
+		this.listen('dragstart', data.onDragStart);
+		this.listen('drag', data.onDrag);
+		this.listen('dragend', data.onDragEnd);
+		this.ref.setAnimation(data.animation);
+		this.ref.setClickable(data.clickable);
+		this.ref.setCursor(data.cursor);
+		this.ref.setDraggable(data.draggable);
+		this.ref.setIcon(data.icon);
+		this.ref.setLabel(data.label);
+		this.ref.setOpacity(data.opacity);
+		this.ref.setPosition(data.position);
+		this.ref.setShape(data.shape.toGoogle());
+		this.ref.setTitle(data.title);
+		this.ref.setVisible(data.visible);
+		this.ref.setZIndex(data.zIndex);
+		this.ref.setMap(map);
 	}
 }
 
 @:forward
 abstract PolygonRef(Ref<google.maps.Polygon, Polygon>) {
 	public inline function new() {
-		this = new Ref(new google.maps.Polygon(), function(v) v.setMap(null));
+		this = new Ref(
+			new google.maps.Polygon(),
+			function(v) v.setMap(null)
+		);
+	}
+	
+	public inline function setup(map:google.maps.Map, data:PolygonData) {
+		this.listen('click', data.onClick);
+		this.listen('dblclick', data.onDoubleClick);
+		this.listen('rightclick', data.onRightClick);
+		this.listen('mousedown', data.onMouseDown);
+		this.listen('mouseout', data.onMouseOut);
+		this.listen('mouseup', data.onMouseUp);
+		this.listen('mouseover', data.onMouseOver);
+		this.listen('dragstart', data.onDragStart);
+		this.listen('drag', data.onDrag);
+		this.listen('dragend', data.onDragEnd);
+		this.ref.setDraggable(data.draggable);
+		this.ref.setEditable(data.editable);
+		this.ref.setPaths([for(v in data.paths) v.toArray()]);
+		this.ref.setMap(map);
 	}
 }
 
 @:forward
 abstract InfoWindowRef(Ref<google.maps.InfoWindow, InfoWindow>) {
 	public inline function new() {
-		this = new Ref(new google.maps.InfoWindow(), function(v) v.close());
+		this = new Ref(
+			new google.maps.InfoWindow(),
+			function(v) v.close()
+		);
+	}
+	
+	public inline function setup(map, anchor, data:InfoWindowData) {
+		this.listen('closeclick', data.onCloseClick);
+		this.ref.setContent(data.children.toElement());
+		this.ref.setPosition(data.position);
+		this.ref.setZIndex(data.zIndex);
+		this.ref.open(map, anchor);
 	}
 }
 
 @:forward
 abstract DrawingManagerRef(Ref<google.maps.drawing.DrawingManager, DrawingManager>) {
 	public inline function new() {
-		this = new Ref(new google.maps.drawing.DrawingManager(), function(v) v.setMap(null));
+		this = new Ref(
+			new google.maps.drawing.DrawingManager(),
+			function(v) v.setMap(null)
+		);
+	}
+	
+	public inline function setup(map, data:DrawingManagerData) {
+		this.listen('circlecomplete', function(v) {if(data.onCircleComplete != null) data.onCircleComplete(v); v.setMap(null);});
+		this.listen('markercomplete', function(v) {if(data.onMarkerComplete != null) data.onMarkerComplete(v); v.setMap(null);});
+		this.listen('polygoncomplete', function(v) {if(data.onPolygonComplete != null) data.onPolygonComplete(v); v.setMap(null);});
+		this.listen('polylinecomplete', function(v) {if(data.onPolylineComplete != null) data.onPolylineComplete(v); v.setMap(null);});
+		this.listen('rectanglecomplete', function(v) {if(data.onRectangleComplete != null) data.onRectangleComplete(v); v.setMap(null);});
+		// this.listen('overlaycomplete', data.onOverlayComplete);
+		
+		this.ref.setOptions({
+			drawingControl: data.drawingControl,	
+			drawingControlOptions: data.drawingControlOptions,	
+			map: map,
+			// circleOptions: data.circleOptions,	
+			// markerOptions: data.markerOptions,	
+			// polygonOptions: data.polygonOptions,	
+			// polylineOptions: data.polylineOptions,	
+			// rectangleOptions: data.rectangleOptions,
+		});
+		
+		if(this.ref.getDrawingMode() != data.drawingMode)
+			this.ref.setDrawingMode(data.drawingMode);
 	}
 }
 
@@ -126,35 +219,7 @@ class GoogleMap extends vdom.Foreign {
 					ctx.markers[i] = new MarkerRef();
 					
 			ref.data = v;
-			var data = v.data;
-			var marker = ref.ref;
-			
-			ref.listen('click', data.onClick);
-			ref.listen('dblclick', data.onDoubleClick);
-			ref.listen('rightclick', data.onRightClick);
-			ref.listen('mousedown', data.onMouseDown);
-			ref.listen('mouseout', data.onMouseOut);
-			ref.listen('mouseup', data.onMouseUp);
-			ref.listen('mouseover', data.onMouseOver);
-			ref.listen('dragstart', data.onDragStart);
-			ref.listen('drag', data.onDrag);
-			ref.listen('dragend', data.onDragEnd);
-			marker.setAnimation(data.animation);
-			marker.setClickable(data.clickable);
-			marker.setCursor(data.cursor);
-			marker.setDraggable(data.draggable);
-			marker.setIcon(data.icon);
-			marker.setLabel(data.label);
-			marker.setOpacity(data.opacity);
-			marker.setPosition(data.position);
-			marker.setShape(data.shape.toGoogle());
-			marker.setTitle(data.title);
-			marker.setVisible(data.visible);
-			marker.setZIndex(data.zIndex);
-				
-			// enable the marker
-			marker.setMap(map);
-			
+			ref.setup(map, v.data);
 			i++;
 		}
 		
@@ -174,28 +239,7 @@ class GoogleMap extends vdom.Foreign {
 					ctx.polygons[i] = new PolygonRef();
 				
 			ref.data = v;
-			var data = v.data;
-			var polygon = ref.ref;
-			
-			
-			ref.listen('click', data.onClick);
-			ref.listen('dblclick', data.onDoubleClick);
-			ref.listen('rightclick', data.onRightClick);
-			ref.listen('mousedown', data.onMouseDown);
-			ref.listen('mouseout', data.onMouseOut);
-			ref.listen('mouseup', data.onMouseUp);
-			ref.listen('mouseover', data.onMouseOver);
-			ref.listen('dragstart', data.onDragStart);
-			ref.listen('drag', data.onDrag);
-			ref.listen('dragend', data.onDragEnd);
-			polygon.setDraggable(data.draggable);
-			polygon.setEditable(data.editable);
-			polygon.setPaths([for(v in data.paths) v.toArray()]);
-			polygon.setVisible(data.visible);
-				
-			// enable the polygon
-			polygon.setMap(map);
-			
+			ref.setup(map, v.data);
 			i++;
 		}
 		
@@ -216,18 +260,8 @@ class GoogleMap extends vdom.Foreign {
 					ctx.infoWindows[i] = new InfoWindowRef();
 				
 			ref.data = v.window;
-			var data = v.window.data;
-			var infoWindow = ref.ref;
-			
-			
-			ref.listen('closeclick', data.onCloseClick);
-			infoWindow.setContent(data.children.toElement());
-			infoWindow.setPosition(data.position);
-			infoWindow.setZIndex(data.zIndex);
-				
-			// enable the infoWindow
 			var anchor = ctx.markers.find(function(m) return m.data == v.anchor);
-			infoWindow.open(map, anchor == null ? null : anchor.ref);
+			ref.setup(map, anchor == null ? null : anchor.ref, v.window.data);
 			
 			i++;
 		}
@@ -243,32 +277,8 @@ class GoogleMap extends vdom.Foreign {
 			else
 				ctx.drawingManager.reset(false);
 			
-			// sorry for the shadowing, just wanna be consistent with other functions
-			var ref = ctx.drawingManager;
-			ref.data = data;
-			var drawingManager = ctx.drawingManager.ref;
-			var data = data.data;
-			
-			ref.listen('circlecomplete', function(v) {if(data.onCircleComplete != null) data.onCircleComplete(v); v.setMap(null);});
-			ref.listen('markercomplete', function(v) {if(data.onMarkerComplete != null) data.onMarkerComplete(v); v.setMap(null);});
-			ref.listen('polygoncomplete', function(v) {if(data.onPolygonComplete != null) data.onPolygonComplete(v); v.setMap(null);});
-			ref.listen('polylinecomplete', function(v) {if(data.onPolylineComplete != null) data.onPolylineComplete(v); v.setMap(null);});
-			ref.listen('rectanglecomplete', function(v) {if(data.onRectangleComplete != null) data.onRectangleComplete(v); v.setMap(null);});
-			// ref.listen('overlaycomplete', data.onOverlayComplete);
-			
-			drawingManager.setOptions({
-				drawingControl: data.drawingControl,	
-				drawingControlOptions: data.drawingControlOptions,	
-				map: map,
-				// circleOptions: data.circleOptions,	
-				// markerOptions: data.markerOptions,	
-				// polygonOptions: data.polygonOptions,	
-				// polylineOptions: data.polylineOptions,	
-				// rectangleOptions: data.rectangleOptions,
-			});
-			
-			if(drawingManager.getDrawingMode() != data.drawingMode)
-				drawingManager.setDrawingMode(data.drawingMode);
+			ctx.drawingManager.data = data;
+			ctx.drawingManager.setup(map, data.data);
 			
 		} else {
 			if(ctx.drawingManager != null) ctx.drawingManager.reset();
