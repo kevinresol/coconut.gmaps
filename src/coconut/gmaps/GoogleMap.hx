@@ -90,7 +90,12 @@ abstract PolygonRef(Ref<google.maps.Polygon, Polygon>) {
 	public inline function new() {
 		this = new Ref(
 			new google.maps.Polygon(),
-			function(v) v.setMap(null)
+			function(v) v.setMap(null),
+			function(v) {
+				var paths = v.getPaths();
+				Event.clearInstanceListeners(paths);
+				paths.forEach(function(path, _) Event.clearInstanceListeners(path));
+			}
 		);
 	}
 	
@@ -109,7 +114,38 @@ abstract PolygonRef(Ref<google.maps.Polygon, Polygon>) {
 		this.ref.setEditable(data.editable);
 		this.ref.setPaths([for(v in data.paths) v.toArray()]);
 		this.ref.setMap(map);
+		
+		setupPathListeners(data.onChange);
 	}
+	
+	function onPathsUpdate(onChange:List<List<LatLngLiteral>>->Void) {
+		var paths = [];
+		this.ref.getPaths().forEach(function(path, _) {
+			var vertices = [];
+			path.forEach(function(v, _) vertices.push({lat: v.lat(), lng: v.lng()}));
+			paths.push(List.fromArray(vertices));
+		});
+		onChange(List.fromArray(paths));
+		setupPathListeners(onChange);
+	}
+	
+	function setupPathListeners(onChange:List<List<LatLngLiteral>>->Void) {
+		if(onChange == null) return;
+			
+		var paths = this.ref.getPaths();
+		var listener = onPathsUpdate.bind(onChange);
+		Event.clearInstanceListeners(paths);
+		Event.addListener(paths, 'remove_at', listener);
+		Event.addListener(paths, 'insert_at', listener);
+		Event.addListener(paths, 'set_at', listener);
+		paths.forEach(function(path, _) {
+			Event.clearInstanceListeners(path);
+			Event.addListener(path, 'remove_at', listener);
+			Event.addListener(path, 'insert_at', listener);
+			Event.addListener(path, 'set_at', listener);
+		});
+	}
+	
 }
 
 @:forward
@@ -146,9 +182,9 @@ abstract DrawingManagerRef(Ref<google.maps.drawing.DrawingManager, DrawingManage
 		this.listen('polylinecomplete', function(v) {if(data.onPolylineComplete != null) data.onPolylineComplete(v); v.setMap(null);});
 		this.listen('rectanglecomplete', function(v) {if(data.onRectangleComplete != null) data.onRectangleComplete(v); v.setMap(null);});
 		// this.listen('overlaycomplete', data.onOverlayComplete);
-		
+		this.listen('drawingmode_changed', function() if(data.onDrawingModeChanged != null) data.onDrawingModeChanged(DrawingModeTools.fromOverlayType(this.ref.getDrawingMode())));
+			
 		this.ref.setOptions({
-			drawingControl: data.drawingControl,	
 			drawingControlOptions: data.drawingControlOptions,	
 			map: map,
 			// circleOptions: data.circleOptions,	
@@ -158,8 +194,12 @@ abstract DrawingManagerRef(Ref<google.maps.drawing.DrawingManager, DrawingManage
 			// rectangleOptions: data.rectangleOptions,
 		});
 		
-		if(this.ref.getDrawingMode() != data.drawingMode)
-			this.ref.setDrawingMode(data.drawingMode);
+		if(data.drawingMode != null) {
+			var mode = data.drawingMode.toOverlayType();
+			if(this.ref.getDrawingMode() != mode)
+				this.ref.setDrawingMode(mode);
+		}
+		
 	}
 }
 

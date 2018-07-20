@@ -31,7 +31,16 @@ class Playground extends coconut.ui.View {
 						</Marker>
 					</for>
 					<for ${paths in polygons}>
-						<Polygon paths=${paths}/>
+						<Polygon
+							editable
+							paths=${paths}
+							onChange=${v -> polygons = polygons.filter(p -> p != paths).prepend(v)}
+							onDoubleClick=${e -> if(e.path != null && e.vertex != null) polygons = polygons.filter(p -> p != paths).prepend({
+								var arr = [for(path in paths) [for(v in path) v]];
+								arr[e.path].splice(e.vertex, 1);
+								[for(a in arr) List.fromArray(a)];
+							})}
+						/>
 					</for>
 					
 					<switch ${markers.first()}>
@@ -41,8 +50,8 @@ class Playground extends coconut.ui.View {
 							</InfoWindow>
 						<case ${_}>
 					</switch>
+					
 					<DrawingManager
-						drawingMode=${POLYGON}
 						drawingControlOptions=${{drawingModes: [POLYGON]}}
 						onPolygonComplete=${v -> polygons = polygons.append([for(v in v.getPaths().getArray()) List.fromArray(v.getArray().map(v -> {lat: v.lat(), lng: v.lng()}))])}
 					/>
@@ -56,7 +65,7 @@ class Playground extends coconut.ui.View {
 		var count 	= 1;
 		timer.run = function() {
 			inline function rand(f:Float) return (Math.random() - 0.5) * f;
-			markers = [for(i in 0...count % 3) {lat: 22.4254815 + rand(0.01), lng: 114.212813 + rand(0.01)}];
+			// markers = [for(i in 0...count % 3) {lat: 22.4254815 + rand(0.01), lng: 114.212813 + rand(0.01)}];
 			// polygons = [[[for(i in 0...3) {lat: 22.4254815 + rand(0.01), lng: 114.212813 + rand(0.01)}]]];
 			count++;
 		}
