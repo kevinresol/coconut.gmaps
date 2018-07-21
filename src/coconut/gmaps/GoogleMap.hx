@@ -118,18 +118,12 @@ abstract PolygonRef(Ref<google.maps.Polygon, Polygon>) {
 		setupPathListeners(data.onChange);
 	}
 	
-	function onPathsUpdate(onChange:List<List<LatLngLiteral>>->Void) {
-		var paths = [];
-		this.ref.getPaths().forEach(function(path, _) {
-			var vertices = [];
-			path.forEach(function(v, _) vertices.push({lat: v.lat(), lng: v.lng()}));
-			paths.push(List.fromArray(vertices));
-		});
-		onChange(List.fromArray(paths));
+	function onPathsUpdate(onChange:Paths->Void) {
+		onChange(this.ref);
 		setupPathListeners(onChange);
 	}
 	
-	function setupPathListeners(onChange:List<List<LatLngLiteral>>->Void) {
+	function setupPathListeners(onChange:Paths->Void) {
 		if(onChange == null) return;
 			
 		var paths = this.ref.getPaths();

@@ -10,7 +10,7 @@ typedef PolygonData = {
 	
 	@:optional var draggable:Bool;
 	@:optional var editable:Bool;
-	@:optional var paths:List<List<LatLngLiteral>>;
+	@:optional var paths:Paths;
 	@:optional var visible:Bool;
 	
 	@:optional var onClick:MouseEvent->Void;
@@ -23,7 +23,7 @@ typedef PolygonData = {
 	@:optional var onDragStart:MouseEvent->Void;
 	@:optional var onDrag:MouseEvent->Void;
 	@:optional var onDragEnd:MouseEvent->Void;
-	@:optional var onChange:List<List<LatLngLiteral>>->Void;
+	@:optional var onChange:Paths->Void;
 }
 
 class Polygon extends ObjectBase<PolygonData> {

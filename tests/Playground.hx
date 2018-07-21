@@ -13,7 +13,7 @@ class Playground extends coconut.ui.View {
 	}
 	
 	@:state var markers:List<LatLngLiteral> = null;
-	@:state var polygons:List<List<List<LatLngLiteral>>> = null;
+	@:state var polygons:List<Paths> = null;
 	
 	function render() {
 		return @hxx '
@@ -35,11 +35,7 @@ class Playground extends coconut.ui.View {
 							editable
 							paths=${paths}
 							onChange=${v -> polygons = polygons.filter(p -> p != paths).prepend(v)}
-							onDoubleClick=${e -> if(e.path != null && e.vertex != null) polygons = polygons.filter(p -> p != paths).prepend({
-								var arr = [for(path in paths) [for(v in path) v]];
-								arr[e.path].splice(e.vertex, 1);
-								[for(a in arr) List.fromArray(a)];
-							})}
+							onDoubleClick=${e -> if(e.path != null && e.vertex != null) polygons = polygons.filter(p -> p != paths).prepend(paths.deleteVertex(e.path, e.vertex))}
 						/>
 					</for>
 					
@@ -53,7 +49,7 @@ class Playground extends coconut.ui.View {
 					
 					<DrawingManager
 						drawingControlOptions=${{drawingModes: [POLYGON]}}
-						onPolygonComplete=${v -> polygons = polygons.append([for(v in v.getPaths().getArray()) List.fromArray(v.getArray().map(v -> {lat: v.lat(), lng: v.lng()}))])}
+						onPolygonComplete=${v -> polygons = polygons.append(v)}
 					/>
 				</GoogleMap>
 			</div>
