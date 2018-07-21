@@ -8,10 +8,18 @@ import tink.pure.*;
 
 typedef PolygonData = {
 	
+	@:optional var clickable:Bool;
 	@:optional var draggable:Bool;
 	@:optional var editable:Bool;
+	@:optional var fillColor:String;
+	@:optional var fillOpacity:Float;
+	@:optional var geodesic:Bool;
+	@:optional var strokeColor:String;
+	@:optional var strokePosition:StrokePosition;
+	@:optional var strokeOpacity:Float;
 	@:optional var paths:Paths;
 	@:optional var visible:Bool;
+	@:optional var zIndex:Float;
 	
 	@:optional var onClick:MouseEvent->Void;
 	@:optional var onDoubleClick:MouseEvent->Void;

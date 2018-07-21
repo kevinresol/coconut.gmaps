@@ -33,9 +33,13 @@ class Playground extends coconut.ui.View {
 					<for ${paths in polygons}>
 						<Polygon
 							editable
+							draggable
 							paths=${paths}
-							onChange=${v -> polygons = polygons.filter(p -> p != paths).prepend(v)}
+							fillColor="red"
+							strokeColor="red"
+							onChange=${v -> {trace('change'); polygons = polygons.filter(p -> p != paths).prepend(v);}}
 							onDoubleClick=${e -> if(e.path != null && e.vertex != null) polygons = polygons.filter(p -> p != paths).prepend(paths.deleteVertex(e.path, e.vertex))}
+							onDrag=${_ -> trace('drag')}
 						/>
 					</for>
 					
@@ -57,11 +61,11 @@ class Playground extends coconut.ui.View {
 	}
 	
 	override function afterInit(e) {
-		var timer = new haxe.Timer(1000);
+		var timer = new haxe.Timer(5000);
 		var count 	= 1;
 		timer.run = function() {
 			inline function rand(f:Float) return (Math.random() - 0.5) * f;
-			// markers = [for(i in 0...count % 3) {lat: 22.4254815 + rand(0.01), lng: 114.212813 + rand(0.01)}];
+			// markers = [for(i in 0...count % 3) new LatLngLiteral(22.4254815 + rand(0.01), 114.212813 + rand(0.01))];
 			// polygons = [[[for(i in 0...3) {lat: 22.4254815 + rand(0.01), lng: 114.212813 + rand(0.01)}]]];
 			count++;
 		}

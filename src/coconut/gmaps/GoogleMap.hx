@@ -110,35 +110,57 @@ abstract PolygonRef(Ref<google.maps.Polygon, Polygon>) {
 		this.listen('dragstart', data.onDragStart);
 		this.listen('drag', data.onDrag);
 		this.listen('dragend', data.onDragEnd);
-		this.ref.setDraggable(data.draggable);
-		this.ref.setEditable(data.editable);
-		this.ref.setPaths([for(v in data.paths) v.toArray()]);
-		this.ref.setMap(map);
 		
-		setupPathListeners(data.onChange);
-	}
-	
-	function onPathsUpdate(onChange:Paths->Void) {
-		onChange(this.ref);
-		setupPathListeners(onChange);
-	}
-	
-	function setupPathListeners(onChange:Paths->Void) {
-		if(onChange == null) return;
-			
-		var paths = this.ref.getPaths();
-		var listener = onPathsUpdate.bind(onChange);
-		Event.clearInstanceListeners(paths);
-		Event.addListener(paths, 'remove_at', listener);
-		Event.addListener(paths, 'insert_at', listener);
-		Event.addListener(paths, 'set_at', listener);
-		paths.forEach(function(path, _) {
-			Event.clearInstanceListeners(path);
-			Event.addListener(path, 'remove_at', listener);
-			Event.addListener(path, 'insert_at', listener);
-			Event.addListener(path, 'set_at', listener);
+		this.ref.setOptions({
+			clickable: data.clickable,
+			draggable: data.draggable,
+			editable: data.editable,
+			fillColor: data.fillColor,
+			fillOpacity: data.fillOpacity,
+			geodesic: data.geodesic,
+			paths: [for(v in data.paths) v.toArray()],
+			strokeColor: data.strokeColor,
+			strokePosition: data.strokePosition,
+			strokeOpacity: data.strokeOpacity,
+			map: map,
+			zIndex: data.zIndex,
 		});
+		
+		var dragging = false;
+		Event.addListener(this.ref, 'dragstart', function() {
+			dragging = true;
+		});
+		Event.addListener(this.ref, 'dragend', function() {
+			dragging = false;
+			if(data.onChange != null) data.onChange(this.ref);
+		});
+		
+		var onPathsUpdate, setupPathListeners;
+		
+		onPathsUpdate = function() {
+			if(data.onChange != null && !dragging) data.onChange(this.ref);
+			setupPathListeners();
+		}
+		
+		setupPathListeners = function() {
+			var paths = this.ref.getPaths();
+			Event.clearInstanceListeners(paths);
+			Event.addListener(paths, 'remove_at', onPathsUpdate);
+			Event.addListener(paths, 'insert_at', onPathsUpdate);
+			Event.addListener(paths, 'set_at', onPathsUpdate);
+			paths.forEach(function(path, _) {
+				Event.clearInstanceListeners(path);
+				Event.addListener(path, 'remove_at', onPathsUpdate);
+				Event.addListener(path, 'insert_at', onPathsUpdate);
+				Event.addListener(path, 'set_at', onPathsUpdate);
+			});
+		}
+		
+		setupPathListeners();
 	}
+	
+	
+	
 	
 }
 
