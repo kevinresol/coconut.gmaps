@@ -14,8 +14,7 @@ using Lambda;
 private typedef Data = {
 	@:optional var className(default, never):String;
 	@:optional var style(default, never):String;
-	var defaultCenter(default, never):LatLngLiteral;
-	var defaultZoom(default, never):Float;
+	var defaultViewport(default, never):Viewport;
 	@:optional var children(default, never):Array<Object>;
 }
 
@@ -346,10 +345,12 @@ class GoogleMap extends vdom.Foreign {
 		element.className = data.className;
 		element.style.cssText = data.style;
 		
-		map = new google.maps.Map(element, {
-			center: data.defaultCenter,
-			zoom: data.defaultZoom,
-		});
+		map = new google.maps.Map(element);
+		
+		switch data.defaultViewport {
+			case Center(c, z): map.setCenter(c); map.setZoom(z);
+			case Bounds(b, p): haxe.Timer.delay(map.fitBounds.bind(b, p), 0);
+		}
 		
 		ctx = {
 			markers: [],

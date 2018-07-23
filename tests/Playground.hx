@@ -20,8 +20,7 @@ class Playground extends coconut.ui.View {
 			<div style="height:100%;width:100%">
 				<GoogleMap
 					style="height:100%;width:100%"
-					defaultCenter=${{lat: 22.4254815, lng: 114.212813}}
-					defaultZoom=${15}
+					defaultViewport=${Bounds({north: 22.5254815, east: 114.412813, south: 22.4254815, west: 114.312813}, null)}
 				>
 					<for ${pos in markers}>
 						<Marker position=${pos}>
