@@ -21,8 +21,7 @@ load the drawing library as well if you use the `DrawingManager`:
 ```jsx
 <GoogleMap
 	style="height:100%;width:100%"
-	defaultCenter=${{lat: 22.4254815, lng: 114.212813}}
-	defaultZoom=${15}
+	defaultViewport=${Center({lat: 22.4, lng: 114.4}, 15)}
 >
 	<!-- Marker -->
 	<Marker position=${pos} onClick=${_ -> trace('clicked')}/>
