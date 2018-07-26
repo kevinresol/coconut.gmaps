@@ -80,7 +80,7 @@ abstract MarkerRef(Ref<google.maps.Marker, Marker>) {
 		this.ref.setTitle(data.title);
 		this.ref.setVisible(data.visible);
 		this.ref.setZIndex(data.zIndex);
-		this.ref.setMap(map);
+		if(this.ref.getMap() != map) this.ref.setMap(map);
 	}
 }
 
@@ -121,9 +121,10 @@ abstract PolygonRef(Ref<google.maps.Polygon, Polygon>) {
 			strokeColor: data.strokeColor,
 			strokePosition: data.strokePosition,
 			strokeOpacity: data.strokeOpacity,
-			map: map,
 			zIndex: data.zIndex,
 		});
+		
+		if(this.ref.getMap() != map) this.ref.setMap(map);
 		
 		var dragging = false;
 		Event.addListener(this.ref, 'dragstart', function() {
@@ -157,10 +158,6 @@ abstract PolygonRef(Ref<google.maps.Polygon, Polygon>) {
 		
 		setupPathListeners();
 	}
-	
-	
-	
-	
 }
 
 @:forward
@@ -175,9 +172,13 @@ abstract InfoWindowRef(Ref<google.maps.InfoWindow, InfoWindow>) {
 	public inline function setup(map, anchor, data:InfoWindowData) {
 		this.listen('closeclick', data.onCloseClick);
 		this.ref.setContent(data.children.toElement());
-		this.ref.setPosition(data.position);
 		this.ref.setZIndex(data.zIndex);
-		this.ref.open(map, anchor);
+		
+		if(anchor == null && data.position != this.ref.getPosition())
+			this.ref.setPosition(data.position);
+		
+		if(this.ref.getMap() != map || this.ref.getAnchor() != anchor)
+			this.ref.open(map, anchor);
 	}
 }
 
@@ -201,13 +202,14 @@ abstract DrawingManagerRef(Ref<google.maps.drawing.DrawingManager, DrawingManage
 			
 		this.ref.setOptions({
 			drawingControlOptions: data.drawingControlOptions,	
-			map: map,
 			// circleOptions: data.circleOptions,	
 			// markerOptions: data.markerOptions,	
 			// polygonOptions: data.polygonOptions,	
 			// polylineOptions: data.polylineOptions,	
 			// rectangleOptions: data.rectangleOptions,
 		});
+		
+		if(this.ref.getMap() != map) this.ref.setMap(map);
 		
 		if(data.drawingMode != null) {
 			var mode = data.drawingMode.toOverlayType();
