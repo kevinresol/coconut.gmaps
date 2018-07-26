@@ -24,7 +24,16 @@ abstract Paths(List<List<LatLngLiteral>>) from List<List<LatLngLiteral>> to List
 	#if geojson
 	@:to
 	public function toGeoJson():geojson.Polygon {
-		return new geojson.Polygon([for(path in this) [for(v in path) new geojson.util.Coordinates(v.lat, v.lng)]]);
+		return new geojson.Polygon([for(path in this) {
+			var verts = [for(v in path) new geojson.util.Coordinates(v.lat, v.lng)];
+			switch path.first() {
+				case Some(v): 
+					// geojson requires polygon paths to go back to the first point
+					verts.push(new geojson.util.Coordinates(v.lat, v.lng));
+				case None:
+			}
+			verts;
+		}]);
 	}
 	
 	@:from
