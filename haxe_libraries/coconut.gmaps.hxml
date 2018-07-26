@@ -1,6 +1,7 @@
--cp src
--lib tink_state
--lib geojson
--lib gmaps
+-D coconut.gmaps=0.0.0
+# @install: lix --silent download "gh://github.com/kevinresol/coconut.gmaps#0cc703f0682c7782e2716785257555b9f8d69f09" into coconut.gmaps/0.0.0/github/0cc703f0682c7782e2716785257555b9f8d69f09
 -lib coconut.vdom
--lib coconut.data
+-lib gmaps
+-lib geojson
+-cp src
+-D coconut_gmaps
