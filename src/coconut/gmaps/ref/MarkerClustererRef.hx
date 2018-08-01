@@ -8,13 +8,18 @@ abstract MarkerClustererRef(RefBase<google.maps.markerclustererplus.MarkerCluste
 	public inline function new() {
 		this = new RefBase(
 			new google.maps.markerclustererplus.MarkerClusterer(null),
-			function(v) {}
+			function(v) {
+				clearMarkers(v);
+				v.setMap(null);
+			}
 		);
 	}
 	
-	public inline function setup(map, markers, data:MarkerClustererData) {
+	public inline function setup(map, markers:Array<Marker>, data:MarkerClustererData) {
+		trace('number of markers to cluster = ' + markers.length);
+		clearMarkers(this.ref);
+		
 		this.listen('click', data.onClick);
-		this.ref.clearMarkers();
 		this.ref.addMarkers(markers);
 		this.ref.setZoomOnClick(data.zoomOnClick);
 		
@@ -27,5 +32,16 @@ abstract MarkerClustererRef(RefBase<google.maps.markerclustererplus.MarkerCluste
 			this.ref.setMap(map);
 			
 		this.data = data;
+	}
+	
+	// the library calls marker.setMap(null) when clearing
+	// this is a hack to retain keep the map reference as-is
+	function clearMarkers(clusterer:google.maps.markerclustererplus.MarkerClusterer) {
+		var restoreMap = [for(m in this.ref.getMarkers()) {
+			var map = m.getMap();
+			function() m.setMap(map);
+		}];
+		clusterer.clearMarkers();
+		for(f in restoreMap) f();
 	}
 }
