@@ -11,7 +11,7 @@ abstract InfoWindowRef(RefBase<google.maps.InfoWindow, InfoWindowData>) {
 			function(v) {
 				v.close();
 				
-				if(this.data != null && this.data.children != null) 
+				if(this.data != null) 
 					switch Std.instance(cast this.data.children, coconut.vdom.Renderable) {
 						case null: // ignore
 						case v: v.destroy();
