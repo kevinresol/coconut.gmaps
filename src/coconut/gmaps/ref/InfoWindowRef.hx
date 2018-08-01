@@ -8,13 +8,24 @@ abstract InfoWindowRef(RefBase<google.maps.InfoWindow, InfoWindow>) {
 	public inline function new() {
 		this = new RefBase(
 			new google.maps.InfoWindow(),
-			function(v) v.close()
+			function(v) {
+				v.close();
+				
+				if(this.data != null && this.data.children != null) 
+					switch Std.instance(cast this.data.children, coconut.vdom.Renderable) {
+						case null: // ignore
+						case v: v.destroy();
+					}
+			}
 		);
 	}
 	
 	public inline function setup(map, anchor, data:InfoWindowData) {
 		this.listen('closeclick', data.onCloseClick);
-		this.ref.setContent(data.children.toElement());
+		this.ref.setContent(switch Std.instance(cast data.children, coconut.vdom.Renderable) {
+			case null: data.children.toElement();
+			case v: v.toElement();
+		});
 		this.ref.setZIndex(data.zIndex);
 		
 		if(anchor == null && data.position != this.ref.getPosition())
