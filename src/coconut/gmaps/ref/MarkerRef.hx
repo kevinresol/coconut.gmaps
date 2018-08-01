@@ -27,6 +27,7 @@ abstract MarkerRef(RefBase<google.maps.Marker, MarkerData>) {
 		this.ref.setAnimation(data.animation);
 		this.ref.setClickable(data.clickable);
 		this.ref.setCursor(data.cursor);
+		this.ref.setData(data.data);
 		this.ref.setDraggable(data.draggable);
 		this.ref.setIcon(data.icon);
 		this.ref.setLabel(data.label);

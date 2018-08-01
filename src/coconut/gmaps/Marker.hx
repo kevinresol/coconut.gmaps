@@ -11,6 +11,7 @@ typedef MarkerData = {
 	@:optional var animation:String;
 	@:optional var clickable:Bool;
 	@:optional var cursor:String;
+	@:optional var data:Any;
 	@:optional var draggable:Bool;
 	@:optional var icon:String;
 	@:optional var label:String;
