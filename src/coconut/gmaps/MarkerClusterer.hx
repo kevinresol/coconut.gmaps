@@ -4,8 +4,9 @@ import coconut.gmaps.Object;
 import google.maps.markerclustererplus.Cluster;
 
 typedef MarkerClustererData = {
-	@:optional var onClick:Cluster->Void;
+	@:optional var averageCenter:Bool;
 	@:optional var zoomOnClick:Bool;
+	@:optional var onClick:Cluster->Void;
 	@:optional var children:Array<Marker>;
 	
 }

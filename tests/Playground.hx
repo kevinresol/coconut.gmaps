@@ -12,6 +12,7 @@ class Playground extends coconut.ui.View {
 		document.body.querySelector('#map').appendChild(hxx('<Playground/>').toElement());
 	}
 	
+	@:state var clustered:List<LatLngLiteral> = [for(i in 0... 3) new LatLngLiteral(22.4254815 +i * (0.005), 114.205813 + i*(-0.005))];
 	@:state var markers:List<LatLngLiteral> = [for(i in 0... 3) new LatLngLiteral(22.4254815 +i * (0.01), 114.212813 + i*(0.01))];
 	@:state var polygons:List<Paths> = null;
 	
@@ -22,8 +23,8 @@ class Playground extends coconut.ui.View {
 					style="height:100%;width:100%"
 					defaultViewport=${Bounds({north: 22.5254815, east: 114.312813, south: 22.4254815, west: 114.212813}, null)}
 				>
-					<MarkerClusterer zoomOnClick=${false} onClick=${c -> trace('cluster clicked')}>
-						<for ${pos in markers}>
+					<MarkerClusterer averageCenter zoomOnClick=${false} onClick=${c -> trace('cluster clicked')}>
+						<for ${pos in clustered}>
 							<Marker position=${pos}>
 								<InfoWindow>
 									<div>Hey</div>
@@ -31,6 +32,14 @@ class Playground extends coconut.ui.View {
 							</Marker>
 						</for>
 					</MarkerClusterer>
+					<for ${pos in markers}>
+						<Marker position=${pos}>
+							<InfoWindow>
+								<div>Hey</div>
+							</InfoWindow>
+						</Marker>
+					</for>
+					
 					<for ${paths in polygons}>
 						<Polygon
 							editable

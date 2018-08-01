@@ -21,6 +21,7 @@ abstract MarkerClustererRef(RefBase<google.maps.markerclustererplus.MarkerCluste
 		
 		this.listen('click', data.onClick);
 		this.ref.addMarkers(markers);
+		this.ref.setAverageCenter(data.averageCenter);
 		this.ref.setZoomOnClick(data.zoomOnClick);
 		
 		// js.Browser.console.log(this.ref);
