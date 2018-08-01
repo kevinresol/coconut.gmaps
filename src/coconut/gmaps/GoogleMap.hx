@@ -23,6 +23,7 @@ private typedef Context = {
 	var markers:Array<MarkerRef>;
 	var polygons:Array<PolygonRef>;
 	var infoWindows:Array<InfoWindowRef>;
+	var markerClusterers:Array<MarkerClustererRef>;
 	var drawingManager:DrawingManagerRef;
 }
 
@@ -41,6 +42,7 @@ class GoogleMap extends vdom.Foreign {
 		var markers = [];
 		var polygons = [];
 		var infoWindows = [];
+		var markerClusterers = [];
 		var drawingManager = null;
 		if(data.children != null) for(o in data.children) switch o.toType() {
 			case OMarker(v):
@@ -56,11 +58,16 @@ class GoogleMap extends vdom.Foreign {
 				infoWindows.push({window: v, anchor: null});
 			case ODrawingManager(v):
 				drawingManager = v;
+			case OMarkerClusterer(v):
+				markerClusterers.push(v);
+				if(v.data.children != null)
+					for(m in v.data.children) markers.push(m);
 		}
 		refreshMarkers(markers);
 		refreshPolygons(polygons);
 		refreshInfoWindows(infoWindows);
 		refreshDrawingManager(drawingManager);
+		refreshMarkerClusterer(markerClusterers);
 	}
 	
 	inline function refreshMarkers(data:Array<Marker>) {
@@ -141,6 +148,37 @@ class GoogleMap extends vdom.Foreign {
 		}
 	}
 	
+	inline function refreshMarkerClusterer(data:Array<MarkerClusterer>) {
+		var i = 0;
+		for(v in data) {
+			var ref = 
+				if(ctx.markerClusterers.length > i) {
+					var reused = ctx.markerClusterers[i];
+					reused.reset(false);
+					reused;
+				} else
+					ctx.markerClusterers[i] = new MarkerClustererRef();
+				
+			ref.data = v;
+			var markers = [];
+			switch v.data.children {
+				case null: // skip
+				case children: 
+					for(c in children)
+						switch ctx.markers.find(function(m) return m.data == c) {
+							case null: // ??
+							case m: markers.push(m.ref);
+						}
+			}
+			ref.setup(map, markers, v.data);
+			
+			i++;
+		}
+		
+		// clean up unused infoWindow instances
+		for(j in i...ctx.markerClusterers.length) ctx.markerClusterers[j].reset();
+	}
+	
 	override function init() {
 		element = js.Browser.document.createDivElement();
 		element.className = data.className;
@@ -157,6 +195,7 @@ class GoogleMap extends vdom.Foreign {
 			markers: [],
 			polygons: [],
 			infoWindows: [],
+			markerClusterers: [],
 			drawingManager: null,
 		}
 		
