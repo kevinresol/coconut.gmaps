@@ -16,7 +16,6 @@ abstract MarkerClustererRef(RefBase<google.maps.markerclustererplus.MarkerCluste
 	}
 	
 	public inline function setup(map, markers:Array<Marker>, data:MarkerClustererData) {
-		trace('number of markers to cluster = ' + markers.length);
 		clearMarkers(this.ref);
 		
 		this.listen('click', data.onClick);
