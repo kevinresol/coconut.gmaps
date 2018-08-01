@@ -120,7 +120,7 @@ class GoogleMap extends vdom.Foreign {
 				} else
 					ctx.infoWindows[i] = new InfoWindowRef();
 				
-			var anchor = ctx.markers.find(function(m) return m.data == v.anchor.data);
+			var anchor = v.anchor == null ? null : ctx.markers.find(function(m) return m.data == v.anchor.data);
 			ref.setup(map, anchor == null ? null : anchor.ref, v.window.data);
 			
 			i++;
