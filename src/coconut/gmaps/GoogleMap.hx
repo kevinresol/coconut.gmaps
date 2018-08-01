@@ -81,7 +81,6 @@ class GoogleMap extends vdom.Foreign {
 				} else 
 					ctx.markers[i] = new MarkerRef();
 					
-			ref.data = v;
 			ref.setup(map, v.data);
 			i++;
 		}
@@ -101,7 +100,6 @@ class GoogleMap extends vdom.Foreign {
 				} else
 					ctx.polygons[i] = new PolygonRef();
 				
-			ref.data = v;
 			ref.setup(map, v.data);
 			i++;
 		}
@@ -122,8 +120,7 @@ class GoogleMap extends vdom.Foreign {
 				} else
 					ctx.infoWindows[i] = new InfoWindowRef();
 				
-			ref.data = v.window;
-			var anchor = ctx.markers.find(function(m) return m.data == v.anchor);
+			var anchor = ctx.markers.find(function(m) return m.data == v.anchor.data);
 			ref.setup(map, anchor == null ? null : anchor.ref, v.window.data);
 			
 			i++;
@@ -140,7 +137,6 @@ class GoogleMap extends vdom.Foreign {
 			else
 				ctx.drawingManager.reset(false);
 			
-			ctx.drawingManager.data = data;
 			ctx.drawingManager.setup(map, data.data);
 			
 		} else {
@@ -159,13 +155,12 @@ class GoogleMap extends vdom.Foreign {
 				} else
 					ctx.markerClusterers[i] = new MarkerClustererRef();
 				
-			ref.data = v;
 			var markers = [];
 			switch v.data.children {
 				case null: // skip
 				case children: 
 					for(c in children)
-						switch ctx.markers.find(function(m) return m.data == c) {
+						switch ctx.markers.find(function(m) return m.data == c.data) {
 							case null: // ??
 							case m: markers.push(m.ref);
 						}

@@ -4,7 +4,7 @@ import google.maps.*;
 import coconut.gmaps.Polygon;
 
 @:forward
-abstract PolygonRef(RefBase<google.maps.Polygon, Polygon>) {
+abstract PolygonRef(RefBase<google.maps.Polygon, PolygonData>) {
 	public inline function new() {
 		this = new RefBase(
 			new google.maps.Polygon(),
@@ -76,6 +76,8 @@ abstract PolygonRef(RefBase<google.maps.Polygon, Polygon>) {
 		}
 		
 		setupPathListeners();
+		
+		this.data = data;
 	}
 }
 

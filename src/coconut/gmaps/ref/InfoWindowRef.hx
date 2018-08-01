@@ -4,7 +4,7 @@ import google.maps.*;
 import coconut.gmaps.InfoWindow;
 
 @:forward
-abstract InfoWindowRef(RefBase<google.maps.InfoWindow, InfoWindow>) {
+abstract InfoWindowRef(RefBase<google.maps.InfoWindow, InfoWindowData>) {
 	public inline function new() {
 		this = new RefBase(
 			new google.maps.InfoWindow(),
@@ -33,5 +33,7 @@ abstract InfoWindowRef(RefBase<google.maps.InfoWindow, InfoWindow>) {
 		
 		if(this.ref.getMap() != map || this.ref.getAnchor() != anchor)
 			this.ref.open(map, anchor);
+			
+		this.data = data;
 	}
 }

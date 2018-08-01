@@ -5,7 +5,7 @@ import google.maps.*;
 using coconut.gmaps.DrawingManager;
 
 @:forward
-abstract DrawingManagerRef(RefBase<google.maps.drawing.DrawingManager, DrawingManager>) {
+abstract DrawingManagerRef(RefBase<google.maps.drawing.DrawingManager, DrawingManagerData>) {
 	public inline function new() {
 		this = new RefBase(
 			new google.maps.drawing.DrawingManager(),
@@ -39,5 +39,6 @@ abstract DrawingManagerRef(RefBase<google.maps.drawing.DrawingManager, DrawingMa
 				this.ref.setDrawingMode(mode);
 		}
 		
+		this.data = data;
 	}
 }

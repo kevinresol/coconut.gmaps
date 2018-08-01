@@ -5,7 +5,7 @@ import google.maps.*;
 using coconut.gmaps.Marker;
 
 @:forward
-abstract MarkerRef(RefBase<google.maps.Marker, Marker>) {
+abstract MarkerRef(RefBase<google.maps.Marker, MarkerData>) {
 	public inline function new() {
 		this = new RefBase(
 			new google.maps.Marker(),
@@ -37,5 +37,6 @@ abstract MarkerRef(RefBase<google.maps.Marker, Marker>) {
 		this.ref.setVisible(data.visible);
 		this.ref.setZIndex(data.zIndex);
 		if(this.ref.getMap() != map) this.ref.setMap(map);
+		this.data = data;
 	}
 }

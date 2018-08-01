@@ -4,7 +4,7 @@ import google.maps.*;
 import coconut.gmaps.MarkerClusterer;
 
 @:forward
-abstract MarkerClustererRef(RefBase<google.maps.markerclustererplus.MarkerClusterer, MarkerClusterer>) {
+abstract MarkerClustererRef(RefBase<google.maps.markerclustererplus.MarkerClusterer, MarkerClustererData>) {
 	public inline function new() {
 		this = new RefBase(
 			new google.maps.markerclustererplus.MarkerClusterer(null),
@@ -25,5 +25,7 @@ abstract MarkerClustererRef(RefBase<google.maps.markerclustererplus.MarkerCluste
 		
 		if(this.ref.getMap() != map)
 			this.ref.setMap(map);
+			
+		this.data = data;
 	}
 }
