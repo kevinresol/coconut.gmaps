@@ -10,6 +10,8 @@ abstract InfoWindowRef(RefBase<google.maps.InfoWindow, InfoWindowData>) {
 			new google.maps.InfoWindow(),
 			function(v) {
 				v.close();
+				v.setAnchor(null);
+				v.setMap(null);
 				
 				if(this.data != null) 
 					switch Std.instance(cast this.data.children, coconut.vdom.Renderable) {
