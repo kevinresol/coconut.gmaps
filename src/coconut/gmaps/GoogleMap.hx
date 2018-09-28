@@ -176,8 +176,8 @@ class GoogleMap extends vdom.Foreign {
 	
 	override function init() {
 		element = js.Browser.document.createDivElement();
-		element.className = data.className;
-		element.style.cssText = data.style;
+		if(data.className != null) element.className = data.className;
+		if(data.style != null) element.style.cssText = data.style;
 		
 		map = new google.maps.Map(element);
 		
