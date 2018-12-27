@@ -16,6 +16,7 @@ enum ObjectType {
 	OMarker(v:Marker);
 	OPolygon(v:Polygon);
 	OInfoWindow(v:InfoWindow);
+	OOverlay(v:Overlay);
 	ODrawingManager(v:DrawingManager);
 	OMarkerClusterer(v:MarkerClusterer);
 }

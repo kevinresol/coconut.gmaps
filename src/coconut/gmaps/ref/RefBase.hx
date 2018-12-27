@@ -5,7 +5,7 @@ import google.maps.Event;
 using tink.CoreApi;
 
 class RefBase<T, Data> {
-	public var ref(default, null):T;
+	public var ref:T;
 	public var binding:CallbackLink;
 	public var data:Data;
 	var doClose:T->Void;

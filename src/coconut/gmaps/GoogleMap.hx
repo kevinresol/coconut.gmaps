@@ -23,6 +23,7 @@ private typedef Context = {
 	var markers:Array<MarkerRef>;
 	var polygons:Array<PolygonRef>;
 	var infoWindows:Array<InfoWindowRef>;
+	var overlays:Array<OverlayRef>;
 	var markerClusterers:Array<MarkerClustererRef>;
 	var drawingManager:DrawingManagerRef;
 }
@@ -42,8 +43,10 @@ class GoogleMap extends vdom.Foreign {
 		var markers = [];
 		var polygons = [];
 		var infoWindows = [];
+		var overlays = [];
 		var markerClusterers = [];
 		var drawingManager = null;
+		
 		if(data.children != null) for(o in data.children) switch o.toType() {
 			case OMarker(v):
 				markers.push(v);
@@ -56,6 +59,8 @@ class GoogleMap extends vdom.Foreign {
 				polygons.push(v);
 			case OInfoWindow(v):
 				infoWindows.push({window: v, anchor: null});
+			case OOverlay(v):
+				overlays.push(v);
 			case ODrawingManager(v):
 				drawingManager = v;
 			case OMarkerClusterer(v):
@@ -66,6 +71,7 @@ class GoogleMap extends vdom.Foreign {
 		refreshMarkers(markers);
 		refreshPolygons(polygons);
 		refreshInfoWindows(infoWindows);
+		refreshOverlays(overlays);
 		refreshDrawingManager(drawingManager);
 		refreshMarkerClusterer(markerClusterers);
 	}
@@ -111,6 +117,8 @@ class GoogleMap extends vdom.Foreign {
 	
 	inline function refreshInfoWindows(data:Array<{window:InfoWindow, anchor:Marker}>) {
 		var i = 0;
+		trace('refreshInfoWindows');
+		trace(data);
 		for(v in data) {
 			var ref = 
 				if(ctx.infoWindows.length > i) {
@@ -127,7 +135,29 @@ class GoogleMap extends vdom.Foreign {
 		}
 		
 		// clean up unused infoWindow instances
-		for(j in i...ctx.infoWindows.length) ctx.infoWindows[j].reset();
+		for(j in i...ctx.infoWindows.length) {
+			trace('reset $j');
+			ctx.infoWindows[j].reset();
+		}
+	}
+	
+	inline function refreshOverlays(data:Array<Overlay>) {
+		var i = 0;
+		for(v in data) {
+			var ref = 
+				if(ctx.overlays.length > i) {
+					var reused = ctx.overlays[i];
+					reused.reset(false);
+					reused;
+				} else
+					ctx.overlays[i] = new OverlayRef();
+				
+			ref.setup(map, v.data);
+			i++;
+		}
+		
+		// clean up unused polygon instances
+		for(j in i...ctx.overlays.length) ctx.overlays[j].reset();
 	}
 	
 	inline function refreshDrawingManager(data:DrawingManager) {
@@ -190,6 +220,7 @@ class GoogleMap extends vdom.Foreign {
 			markers: [],
 			polygons: [],
 			infoWindows: [],
+			overlays: [],
 			markerClusterers: [],
 			drawingManager: null,
 		}
