@@ -19,10 +19,11 @@ class Overlay extends ObjectBase<OverlayData> {
 
 enum OverlayType {
 	Image(source:String, bounds:LatLngBounds);
+	Custom(view:google.maps.OverlayView);
 }
 
 @:allow(coconut.gmaps)
-class ImageOverlay extends google.maps.OverlayView {
+class ImageOverlayView extends google.maps.OverlayView {
 	var div:Element;
 	
 	var source:String;
@@ -69,7 +70,8 @@ class ImageOverlay extends google.maps.OverlayView {
 class OverlayTypeTools {
 	public static function toGoogle(type:OverlayType):google.maps.OverlayView {
 		return switch type {
-			case Image(source, bounds): new ImageOverlay(source, bounds);
+			case Image(source, bounds): new ImageOverlayView(source, bounds);
+			case Custom(view): view;
 		}
 	}
 }
