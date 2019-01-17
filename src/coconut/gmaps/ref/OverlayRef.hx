@@ -60,7 +60,6 @@ class OverlayView extends google.maps.OverlayView {
 	
 	function set_content(e:Element):Element {
 		while(div.firstChild != null) div.removeChild(div.firstChild);
-		console.log(e);
 		if(e != null) div.appendChild(e);
 		return e;
 	}

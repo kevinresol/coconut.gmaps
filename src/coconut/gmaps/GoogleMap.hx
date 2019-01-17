@@ -117,8 +117,6 @@ class GoogleMap extends vdom.Foreign {
 	
 	inline function refreshInfoWindows(data:Array<{window:InfoWindow, anchor:Marker}>) {
 		var i = 0;
-		trace('refreshInfoWindows');
-		trace(data);
 		for(v in data) {
 			var ref = 
 				if(ctx.infoWindows.length > i) {
@@ -135,10 +133,7 @@ class GoogleMap extends vdom.Foreign {
 		}
 		
 		// clean up unused infoWindow instances
-		for(j in i...ctx.infoWindows.length) {
-			trace('reset $j');
-			ctx.infoWindows[j].reset();
-		}
+		for(j in i...ctx.infoWindows.length) ctx.infoWindows[j].reset();
 	}
 	
 	inline function refreshOverlays(data:Array<Overlay>) {
